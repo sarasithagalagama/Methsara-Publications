@@ -1,0 +1,68 @@
+﻿/* ============================================
+   DashboardHeader Styles - Standard
+   ============================================ */
+
+/* Styles are now handled in dashboard.css for consistency */
+/* 
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.dashboard-title {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin: 0;
+  font-weight: 500;
+  opacity: 0.8;
+} 
+*/
+
+/* Buttons are handled globally in dashboard.css, 
+   but we can add header-specific action tweaks if needed */
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.action-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .dashboard-title { font-size: 2rem; }
+  
+  .header-actions {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  
+  .action-btn { white-space: nowrap; }
+}

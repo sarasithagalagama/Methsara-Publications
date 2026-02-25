@@ -1,0 +1,162 @@
+﻿/* ============================================
+   StatCard Component Styles - Standard
+   ============================================ */
+
+.stat-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-premium);
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  transition: var(--transition-smooth);
+  border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+  /* glass effect 2.0 */
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+
+/* Decorative Background Pattern */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, var(--primary-alpha) 0%, transparent 70%);
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.stat-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary-light);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  flex-shrink: 0;
+  transition: var(--transition-smooth);
+  z-index: 1;
+  background: linear-gradient(135deg, hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.1), hsla(var(--primary-h), var(--primary-s), var(--primary-l), 0.2));
+  color: var(--primary-color);
+}
+
+.stat-card:hover .stat-icon {
+  transform: rotate(-10deg) scale(1.1);
+  background: var(--primary-color);
+  color: white;
+}
+
+.stat-content {
+  flex: 1;
+  z-index: 1;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: var(--font-body);
+}
+
+.stat-value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.1;
+  display: block !important;
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+  -webkit-text-fill-color: initial !important; /* Safety against leaks */
+}
+
+.stat-card.variant-primary .stat-value { color: #5D4037 !important; }
+.stat-card.variant-danger .stat-value { color: #dc2626 !important; }
+.stat-card.variant-warning .stat-value { color: #d97706 !important; }
+.stat-card.variant-success .stat-value { color: #059669 !important; }
+
+.stat-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.stat-change {
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0,0,0,0.03);
+}
+
+.trend-up {
+  color: #10B981;
+}
+
+.trend-down {
+  color: #EF4444;
+}
+
+.stat-card.variant-primary .stat-icon {
+  background: var(--primary-alpha);
+  color: var(--primary-color);
+}
+
+.stat-card.variant-dark .stat-icon {
+  background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));
+  color: white;
+}
+
+.stat-card.variant-success .stat-icon {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.2));
+  color: #059669;
+}
+
+.stat-card.variant-warning .stat-icon {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2));
+  color: #d97706;
+}
+
+.stat-card.variant-info .stat-icon {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.2));
+  color: #2563eb;
+}
+
+.stat-card.variant-secondary .stat-icon {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.1), rgba(107, 114, 128, 0.2));
+  color: #4b5563;
+}
+
+.stat-card.variant-danger .stat-icon {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.2));
+  color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stat-card { padding: 1.25rem; }
+  .stat-icon { width: 50px; height: 50px; }
+  .stat-value { font-size: 1.5rem; }
+}

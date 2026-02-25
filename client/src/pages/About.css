@@ -1,0 +1,392 @@
+﻿/* ============================================
+   About Us Page - Application Styles
+   ============================================ */
+
+.about-modern-page {
+  animation: fadeIn 0.8s ease-out;
+  padding-bottom: 5rem;
+  background-color: var(--bg-color);
+}
+
+/* --- Hero Section --- */
+.about-modern-hero {
+  position: relative;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  padding-top: 5rem;
+  padding-bottom: 10rem;
+  background: linear-gradient(135deg, var(--primary-dark), #1c1411);
+}
+
+.about-hero-bg {
+  position: absolute;
+  inset: 0;
+  background: url("https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.2;
+  mix-blend-mode: overlay;
+  z-index: 0;
+}
+
+.about-hero-content {
+  position: relative;
+  z-index: 10;
+  max-width: 900px;
+  color: white;
+}
+
+.about-hero-content h1 {
+  font-size: 4rem;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+}
+
+.about-hero-content p {
+  font-size: 1.25rem;
+  color: #f8f9fa;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.7;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.badge-modern {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: rgba(197, 160, 89, 0.15);
+  border: 1px solid rgba(197, 160, 89, 0.3);
+  color: var(--secondary-light);
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* --- Metrics Overlap --- */
+.about-metrics {
+  margin-top: -5rem;
+  position: relative;
+  z-index: 20;
+}
+
+.metrics-modern-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.metric-modern-card {
+  background: white;
+  padding: 2.5rem 2rem;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  transition: transform 0.4s ease;
+}
+
+.metric-modern-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 30px 50px rgba(197, 160, 89, 0.15);
+  border-color: var(--secondary-light);
+}
+
+.metric-icon {
+  width: 70px;
+  height: 70px;
+  background: var(--bg-color);
+  color: var(--secondary-dark);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.metric-modern-card:hover .metric-icon {
+  background: var(--secondary-color);
+  color: white;
+  transform: scale(1.1) rotate(5deg);
+}
+
+.metric-modern-card h3 {
+  font-size: 2.5rem;
+  color: var(--primary-dark);
+  margin-bottom: 0.25rem;
+  font-family: 'Playfair Display', serif;
+}
+
+.metric-modern-card span {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* --- Story Split --- */
+.story-modern {
+  padding: 8rem 0;
+}
+
+.story-split-modern {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6rem;
+  align-items: center;
+}
+
+.story-modern-text .lead-text {
+  font-size: 1.35rem;
+  color: var(--primary-dark);
+  font-weight: 500;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.story-modern-text p {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
+}
+
+.founder-quote {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: white;
+  border-left: 4px solid var(--secondary-color);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--primary-dark);
+  box-shadow: var(--shadow-md);
+  position: relative;
+}
+
+.founder-name {
+  display: block;
+  font-size: 0.9rem;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--secondary-dark);
+  margin-top: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.visual-collage {
+  position: relative;
+  height: 600px;
+}
+
+.collage-img-1 {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 80%;
+  height: 70%;
+  object-fit: cover;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2xl);
+  z-index: 2;
+  border: 8px solid white;
+}
+
+.collage-img-2 {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60%;
+  height: 50%;
+  object-fit: cover;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  z-index: 3;
+  border: 8px solid white;
+}
+
+.collage-accent-box {
+  position: absolute;
+  bottom: 10%;
+  right: 10%;
+  width: 50%;
+  height: 60%;
+  background: linear-gradient(135deg, var(--secondary-light), var(--secondary-dark));
+  border-radius: var(--radius-xl);
+  z-index: 1;
+  opacity: 0.3;
+  transform: rotate(5deg);
+}
+
+/* --- Values Grid --- */
+.values-modern-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
+  margin-top: 4rem;
+}
+
+.value-modern-card {
+  background: white;
+  padding: 3rem 2.5rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(0,0,0,0.03);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.value-modern-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--secondary-color), var(--secondary-dark));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s ease;
+}
+
+.value-modern-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-xl);
+}
+
+.value-modern-card:hover::before {
+  transform: scaleX(1);
+}
+
+.value-modern-card.highlighted {
+  background: linear-gradient(135deg, var(--primary-dark), #1c1411);
+  color: white;
+}
+
+.value-modern-card.highlighted::before {
+  background: linear-gradient(90deg, var(--secondary-light), white);
+}
+
+.value-icon {
+  width: 64px;
+  height: 64px;
+  background: rgba(197, 160, 89, 0.1);
+  color: var(--secondary-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.value-modern-card.highlighted .value-icon {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.value-modern-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--primary-dark);
+}
+
+.value-modern-card.highlighted h3 {
+  color: white;
+}
+
+.value-modern-card p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.value-modern-card.highlighted p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* --- CTA Section --- */
+.about-modern-cta {
+  padding: 6rem 0;
+}
+
+.cta-modern-box {
+  background: url("https://images.unsplash.com/photo-1497633762265-9d179a990aa6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  padding: 6rem 3rem;
+  border-radius: var(--radius-2xl);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-2xl);
+}
+
+.cta-modern-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(45, 30, 25, 0.8), rgba(45, 30, 25, 0.95));
+  z-index: 1;
+}
+
+.cta-modern-box h2 {
+  position: relative;
+  z-index: 2;
+  color: white;
+  font-size: 3rem;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.2;
+}
+
+.cta-modern-box .btn-modern-primary {
+  position: relative;
+  z-index: 2;
+}
+
+/* --- Animations --- */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.animate-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 1024px) {
+  .about-hero-content h1 { font-size: 3.5rem; }
+  .metrics-modern-grid { grid-template-columns: repeat(2, 1fr); }
+  .about-metrics { margin-top: -3rem; }
+  .story-split-modern { grid-template-columns: 1fr; gap: 4rem; }
+  .visual-collage { height: 500px; order: -1; }
+  .values-modern-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .about-hero-content h1 { font-size: 2.8rem; }
+  .metrics-modern-grid { grid-template-columns: 1fr; }
+  .visual-collage { height: 400px; }
+  .values-modern-grid { grid-template-columns: 1fr; }
+  .cta-modern-box { padding: 4rem 2rem; }
+  .cta-modern-box h2 { font-size: 2.2rem; }
+}

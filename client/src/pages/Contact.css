@@ -1,0 +1,381 @@
+﻿/* ============================================
+   Contact Us Page - Application Styles
+   ============================================ */
+
+.contact-modern-page {
+  animation: fadeIn 0.8s ease-out;
+  padding-bottom: 5rem;
+  background-color: var(--bg-color);
+  overflow-x: hidden;
+}
+
+/* --- Hero Section --- */
+.contact-modern-hero {
+  position: relative;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  padding-top: 5rem;
+  padding-bottom: 12rem;
+  background: linear-gradient(135deg, var(--primary-dark), #101828);
+}
+
+.contact-hero-bg {
+  position: absolute;
+  inset: 0;
+  background: url("https://images.unsplash.com/photo-1596524430615-b46475ddff6e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.15;
+  mix-blend-mode: color-dodge;
+  z-index: 0;
+}
+
+.contact-hero-content {
+  position: relative;
+  z-index: 10;
+  max-width: 800px;
+  color: white;
+}
+
+.contact-hero-content h1 {
+  font-size: 4rem;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  color: #ffffff;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+}
+
+.contact-hero-content p {
+  font-size: 1.25rem;
+  color: #f8f9fa;
+  line-height: 1.7;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Split Layout --- */
+.contact-modern-main {
+  margin-top: -6rem;
+  position: relative;
+  z-index: 20;
+}
+
+.contact-split-modern {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 3rem;
+  align-items: stretch;
+}
+
+/* --- Left Side: Info Card --- */
+.info-modern-card {
+  background: linear-gradient(135deg, var(--primary-dark), #2d1e19);
+  color: white;
+  padding: 4rem 3rem;
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.info-modern-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(197, 160, 89, 0.1) 0%, transparent 60%);
+  border-radius: 50%;
+}
+
+.info-modern-card h3 {
+  font-size: 2.2rem;
+  color: white;
+  margin-bottom: 1rem;
+  font-family: 'Playfair Display', serif;
+}
+
+.info-modern-desc {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+  margin-bottom: 3rem;
+  line-height: 1.6;
+}
+
+.info-modern-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.info-modern-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.icon-modern-box {
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--secondary-light);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.info-modern-item:hover .icon-modern-box {
+  background: var(--secondary-color);
+  color: white;
+  border-color: var(--secondary-color);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(197, 160, 89, 0.2);
+}
+
+.info-modern-item h4 {
+  font-size: 1.1rem;
+  color: white;
+  margin-bottom: 0.25rem;
+}
+
+.info-modern-item p {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.social-modern-connect {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.social-modern-connect h4 {
+  font-size: 1.1rem;
+  color: white;
+  margin-bottom: 1.5rem;
+}
+
+.social-modern-icons {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-modern-icons .metric-icon {
+  width: 45px;
+  height: 45px;
+  margin: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.social-modern-icons .metric-icon:hover {
+  background: var(--secondary-color);
+  transform: translateY(-5px);
+  border-color: var(--secondary-color);
+  color: white;
+}
+
+/* --- Right Side: Form Card --- */
+.form-modern-card {
+  background: white;
+  padding: 4rem;
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  height: 100%;
+}
+
+.form-modern-card h2 {
+  font-size: 2.5rem;
+  color: var(--primary-dark);
+  margin-bottom: 0.5rem;
+}
+
+.form-modern-card > p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin-bottom: 3rem;
+}
+
+.premium-modern-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-modern-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-modern-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-modern-group label {
+  font-weight: 600;
+  color: var(--primary-dark);
+  font-size: 0.95rem;
+}
+
+.form-modern-group input,
+.form-modern-group select,
+.form-modern-group textarea {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+.form-modern-group textarea {
+  resize: vertical;
+}
+
+.form-modern-group input:focus,
+.form-modern-group select:focus,
+.form-modern-group textarea:focus {
+  outline: none;
+  background: white;
+  border-color: var(--secondary-light);
+  box-shadow: 0 0 0 4px rgba(197, 160, 89, 0.1);
+}
+
+.w-100 {
+  width: 100%;
+  justify-content: center;
+  padding: 1.25rem;
+  font-size: 1.1rem;
+  margin-top: 1rem;
+}
+
+/* --- Map Abstract Section --- */
+.map-modern-section {
+  padding: 8rem 0 4rem;
+}
+
+.map-modern-wrapper {
+  background: white;
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  align-items: center;
+}
+
+.map-abstract-visual {
+  background: url("https://images.unsplash.com/photo-1524661135-423995f22d0b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80");
+  background-size: cover;
+  background-position: center;
+  height: 400px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-abstract-visual::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.map-marker-pin {
+  position: relative;
+  z-index: 2;
+  background: var(--secondary-color);
+  width: 60px;
+  height: 60px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  border: 4px solid white;
+}
+
+.map-marker-pin svg {
+  transform: rotate(45deg);
+}
+
+.pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid var(--secondary-color);
+  animation: pulsePin 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  z-index: -1;
+}
+
+@keyframes pulsePin {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+}
+
+.map-modern-text {
+  padding: 3rem;
+}
+
+.map-modern-text h3 {
+  font-size: 2rem;
+  color: var(--primary-dark);
+  margin-bottom: 1rem;
+}
+
+.map-modern-text p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* --- Responsive --- */
+@media (max-width: 1024px) {
+  .contact-split-modern { grid-template-columns: 1fr; }
+  .info-modern-card { padding: 3rem; }
+  .info-modern-list { flex-direction: row; flex-wrap: wrap; }
+  .info-modern-item { flex: 1 1 40%; }
+  .map-modern-wrapper { grid-template-columns: 1fr; }
+  .map-abstract-visual { height: 300px; }
+}
+
+@media (max-width: 768px) {
+  .contact-hero-content h1 { font-size: 3rem; }
+  .form-modern-card { padding: 2.5rem; }
+  .form-modern-row { grid-template-columns: 1fr; }
+  .info-modern-item { flex: 1 1 100%; }
+}
+
+@media (max-width: 480px) {
+  .contact-modern-hero { min-height: 400px; }
+  .contact-hero-content h1 { font-size: 2.5rem; }
+  .form-modern-card { padding: 1.5rem; }
+}

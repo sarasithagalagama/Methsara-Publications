@@ -1,0 +1,181 @@
+﻿/* Modal.css - glass effect */
+.common-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4); /* Darker overlay for better contrast */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px); /* Increased blur */
+  animation: commonModalFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 1rem;
+}
+
+.common-modal-content {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-glass, rgba(255, 255, 255, 0.6));
+  border-radius: var(--radius-xl, 24px);
+  width: 100%;
+  max-width: 600px; /* Default md size */
+  max-height: 90vh;
+  box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1));
+  transform: translateY(0);
+  animation: commonModalSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Ensure rounded corners clip content */
+}
+
+/* Size Variants */
+.modal-sm { max-width: 400px; }
+.modal-md { max-width: 600px; }
+.modal-lg { max-width: 800px; }
+.modal-xl { max-width: 1200px; }
+.modal-wide { max-width: 1000px; }
+
+.common-modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.05));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
+}
+
+.common-modal-header h2 {
+  margin: 0;
+  font-family: var(--font-heading, "Outfit", sans-serif);
+  color: var(--text-primary, #111827);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.common-modal-close {
+  background: rgba(0,0,0,0.05);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary, #4B5563);
+  transition: all 0.2s ease;
+}
+
+.common-modal-close:hover {
+  background: rgba(0,0,0,0.1);
+  color: var(--text-primary, #000);
+  transform: rotate(90deg);
+}
+
+.common-modal-body {
+  padding: 2rem;
+  overflow-y: auto;
+  flex: 1;
+  /* Scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.common-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+.common-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.common-modal-body::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.1);
+  border-radius: 20px;
+}
+
+.common-modal-footer {
+  padding: 1.25rem 2rem;
+  border-top: 1px solid var(--border-color, rgba(0, 0, 0, 0.05));
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  background: rgba(249, 250, 251, 0.8); /* Slight grey background */
+  backdrop-filter: blur(10px);
+}
+
+@keyframes commonModalFadeIn {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(8px); }
+}
+
+@keyframes commonModalSlideIn {
+  from { transform: scale(0.95) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* =========================================
+   Standardized Form Styles (Used by Forms.jsx)
+   ========================================= */
+.form-group {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary, #374151);
+  font-family: var(--font-body, sans-serif);
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color, #E5E7EB);
+  border-radius: var(--radius-md, 8px);
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.95rem;
+  color: var(--text-primary, #111827);
+  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color, #5D4037);
+  box-shadow: 0 0 0 3px var(--primary-alpha, rgba(93, 64, 55, 0.1));
+  background: white;
+}
+
+.form-input.is-invalid,
+.form-select.is-invalid,
+.form-textarea.is-invalid {
+  border-color: #EF4444;
+  background-color: #FEF2F2;
+}
+
+.form-error {
+  color: #EF4444;
+  font-size: 0.8rem;
+  font-weight: 500;
+  animation: slideDown 0.2s ease;
+}
+
+.text-danger {
+  color: #EF4444;
+}
+
+.form-input-sm {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm, 6px);
+}
