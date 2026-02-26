@@ -1,0 +1,382 @@
+/* ============================================
+   Finance Manager Dashboard Specific Styles
+   ============================================ */
+
+.amount {
+  font-weight: 700;
+  color: var(--primary-dark);
+  font-size: 1.05rem;
+}
+
+.action-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.action-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  border-color: var(--gold-primary, #5D4037);
+  background: linear-gradient(to bottom right, #ffffff, #fcf9f2);
+}
+
+.action-card h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.25rem;
+  color: var(--brown-dark, #3d2b1f);
+}
+
+.action-card p {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.action-link {
+  display: inline-block;
+  color: var(--gold-primary, #5D4037);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.action-card:hover .action-link {
+  padding-left: 8px;
+  color: var(--gold-dark, #aa8c2c);
+}
+
+.action-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--gold-light, #fcf6e5);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-primary, #5D4037);
+  transition: all 0.3s ease;
+}
+
+.action-card:hover .action-icon {
+  background: var(--gold-primary, #5D4037);
+  color: white;
+}
+
+/* Modal form styling */
+.salary-management .table-container,
+.supplier-management .table-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* .form-input:focus {
+  border-color: var(--gold-primary, #5D4037);
+  box-shadow: 0 0 0 2px rgba(93, 64, 55, 0.1);
+} */
+
+/* Enhanced Table & Modal Styles */
+.modal-wide {
+  max-width: 1000px !important;
+  width: 95% !important;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--brown-dark, #3d2b1f);
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.user-subtitle {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.table-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.table-input:focus {
+  border-color: var(--gold-primary, #5D4037);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(93, 64, 55, 0.1);
+}
+
+.btn-gold {
+  background-color: var(--gold-primary, #5D4037);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-gold:hover {
+  background-color: var(--gold-dark, #aa8c2c);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(170, 140, 44, 0.2);
+}
+
+.status-badge.info {
+  background-color: #ebf8ff;
+  color: #2b6cb0;
+  border: 1px solid #bee3f8;
+}
+
+.status-badge.success {
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.input-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 2px 4px;
+}
+
+.input-with-icon input {
+  border: none;
+  padding: 4px 6px;
+  font-size: 0.9rem;
+  width: 80px;
+}
+
+.input-with-icon input:focus {
+  outline: none;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  background-color: #f1f5f9;
+  color: var(--gold-primary, #5D4037);
+}
+
+/* Professional Report Styling - Preview Mode */
+.professional-report-container {
+  background-color: #f8fafc;
+  padding: 40px;
+  border-radius: 12px;
+  max-height: 80vh;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.professional-report {
+  background: white;
+  color: #333;
+  font-family: 'Inter', -apple-system, sans-serif;
+  line-height: 1.6;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #333;
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.company-name {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.company-tagline {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 5px 0 0;
+}
+
+.report-meta {
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+.meta-label {
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-right: 8px;
+}
+
+.report-section {
+  margin-bottom: 35px;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  color: #444;
+}
+
+.report-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.report-stat-item label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 5px;
+}
+
+.report-stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.growth-positive { color: #16a34a; }
+.growth-negative { color: #dc2626; }
+
+.expense-details {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.expense-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 0.95rem;
+  border-bottom: 1px dashed #e2e8f0;
+}
+
+.expense-row:last-child { border-bottom: none; }
+
+.expense-row.total-row {
+  margin-top: 10px;
+  padding-top: 15px;
+  border-top: 2px solid #333;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #1a1a1a;
+}
+
+.summary-box {
+  background: #1a1a1a;
+  color: white;
+  padding: 25px;
+  border-radius: 8px;
+  margin-top: 40px;
+}
+
+.net-income-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.net-income-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+}
+
+.net-income-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.net-income-value.positive { color: #4ade80; }
+.net-income-value.negative { color: #f87171; }
+
+.report-footer {
+  margin-top: 60px;
+  border-top: 1px solid #eee;
+  padding-top: 30px;
+}
+
+.signature-area {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 40px;
+}
+
+.signature-line {
+  text-align: center;
+}
+
+.signature-line .line {
+  width: 200px;
+  height: 1px;
+  background: #333;
+  margin: 40px auto 10px;
+}
+
+.signature-line p {
+  font-size: 0.8rem;
+  color: #666;
+  margin: 0;
+}
+
+.confidential-tag {
+  text-align: center;
+  font-size: 0.7rem;
+  color: #ccc;
+  letter-spacing: 2px;
+}
+
+.report-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
