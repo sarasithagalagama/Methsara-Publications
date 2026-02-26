@@ -1,0 +1,42 @@
+/* ============================================
+   LowStockAlerts Styles (Standardized)
+   ============================================ */
+
+.inventory-alert-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  border-top: 4px solid transparent !important;
+}
+
+.inventory-alert-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.inventory-alert-card.critical { border-top-color: #ef4444 !important; }
+.inventory-alert-card.warning { border-top-color: #f59e0b !important; }
+.inventory-alert-card.low { border-top-color: #eab308 !important; }
+
+/* Alert Badges */
+.badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.alert-badge-critical { background: #fee2e2; color: #dc2626; }
+.alert-badge-warning { background: #fef3c7; color: #d97706; }
+.alert-badge-low { background: #fef9c3; color: #a16207; }
+
+/* Progress Bars */
+.alert-progress-bar.critical { background: #ef4444; }
+.alert-progress-bar.warning { background: #f59e0b; }
+.alert-progress-bar.low { background: #eab308; }
+
+.text-success { color: #10b981; }
+
+@media print {
+  .no-print { display: none !important; }
+  .dashboard-container { padding: 0; }
+}
