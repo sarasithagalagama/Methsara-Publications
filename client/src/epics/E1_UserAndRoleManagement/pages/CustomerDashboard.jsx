@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // CustomerDashboard
 // Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
@@ -35,9 +35,7 @@ import "./CustomerDashboard.css";
 const CustomerDashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [activeTab, setActiveTab] = useState("overview");
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState({
@@ -49,16 +47,12 @@ const CustomerDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ─────────────────────────────────
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     fetchCustomerData();
   }, []);
 
-  // ─────────────────────────────────
-  // Event Handlers
-  // ─────────────────────────────────
+  // [E3.6] Fetches the customer's order history and calculates summary stats for the overview tab
   const fetchCustomerData = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -89,6 +83,7 @@ const CustomerDashboard = () => {
     navigate("/");
   };
 
+  // Maps order status strings to CSS class names for the coloured status badge in the orders table
   const getStatusColor = (status) => {
     const colors = {
       Pending: "status-pending",
@@ -118,9 +113,7 @@ const CustomerDashboard = () => {
   };
 
   if (loading) {
-    // ─────────────────────────────────
     // Render
-    // ─────────────────────────────────
     return (
       <div className="dashboard-loading">
         <div className="spinner"></div>
@@ -182,7 +175,7 @@ const CustomerDashboard = () => {
             {/* Welcome Banner */}
             <div className="welcome-banner">
               <div className="welcome-text">
-                <h1>Welcome back, {user?.name}! 👋</h1>
+                <h1>Welcome back, {user?.name}!</h1>
                 <p>
                   Manage your profile, check your orders, and update settings.
                 </p>
@@ -360,7 +353,7 @@ const CustomerDashboard = () => {
                                   "Unknown Product"}
                               </h4>
                               <p className="item-qty-price">
-                                Qty: {item.quantity} × Rs.{" "}
+                                Qty: {item.quantity} &times; Rs.{" "}
                                 {item.price.toLocaleString()}
                               </p>
                             </div>

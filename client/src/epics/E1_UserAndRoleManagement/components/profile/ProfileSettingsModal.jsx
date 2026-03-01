@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // ProfileSettingsModal
 // Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
@@ -21,9 +21,7 @@ import "./ProfileSettingsModal.css";
 
 const ProfileSettingsModal = ({ isOpen, onClose }) => {
   const { user, updateProfile, changePassword } = useAuth();
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -48,9 +46,7 @@ const ProfileSettingsModal = ({ isOpen, onClose }) => {
   const [sessions, setSessions] = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
 
-  // ─────────────────────────────────
-  // Side Effects
-  // ─────────────────────────────────
+  // [E1.3] Pre-fills the form with current user data each time the modal opens or user state updates
   useEffect(() => {
     if (user) {
       setFormData({
@@ -68,15 +64,14 @@ const ProfileSettingsModal = ({ isOpen, onClose }) => {
     }
   }, [user, isOpen]);
 
+  // [E1.13] Lazy-loads active sessions only when the Security tab is opened (avoids unnecessary API calls)
   useEffect(() => {
     if (activeTab === "security" && isOpen) {
       fetchSessions();
     }
   }, [activeTab, isOpen]);
 
-  // ─────────────────────────────────
-  // Event Handlers
-  // ─────────────────────────────────
+  // [E1.13] Retrieves all active login sessions across all devices for the current user
   const fetchSessions = async () => {
     setLoadingSessions(true);
     try {
@@ -92,6 +87,7 @@ const ProfileSettingsModal = ({ isOpen, onClose }) => {
     }
   };
 
+  // [E1.13] Terminates a specific device session — e.g., revoke access from a lost or shared device
   const handleRevokeSession = async (sessionId) => {
     try {
       const token = localStorage.getItem("token");
@@ -220,9 +216,7 @@ const ProfileSettingsModal = ({ isOpen, onClose }) => {
     setLoading(false);
   };
 
-  // ─────────────────────────────────
   // Render
-  // ─────────────────────────────────
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Account Settings" size="lg">
       <div className="settings-tabs">

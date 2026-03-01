@@ -1,6 +1,6 @@
-﻿// ============================================
+// ============================================
 // Change Password Modal
-// Epic: E1 - User & Admin Management
+// Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
 // Purpose: Force password change on first login (E1.8)
 // ============================================
@@ -9,9 +9,7 @@ import React, { useState } from "react";
 import axios from "axios";
 
 const ChangePasswordModal = ({ onClose, onSuccess, logout }) => {
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -21,9 +19,7 @@ const ChangePasswordModal = ({ onClose, onSuccess, logout }) => {
   const [loading, setLoading] = useState(false);
 
   // Handle input changes
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -31,6 +27,7 @@ const ChangePasswordModal = ({ onClose, onSuccess, logout }) => {
     });
   };
 
+  // [E1.8] Staff must supply their temporary password first — proves identity before the change is allowed
   // Handle password change submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,9 +75,7 @@ const ChangePasswordModal = ({ onClose, onSuccess, logout }) => {
     }
   };
 
-  // ─────────────────────────────────
   // Render
-  // ─────────────────────────────────
   return (
     <div className="dash-modal-overlay">
       <div className="dash-modal-content">

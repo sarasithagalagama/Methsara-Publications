@@ -1,6 +1,6 @@
-﻿// ============================================
+// ============================================
 // Forgot Password Page
-// Epic: E1 - User & Admin Management
+// Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
 // Purpose: Password reset request (E1.7)
 // ============================================
@@ -11,19 +11,15 @@ import axios from "axios";
 import { ArrowRight } from "lucide-react";
 
 const ForgotPassword = () => {
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [resetToken, setResetToken] = useState(""); // Show token
   const [loading, setLoading] = useState(false);
 
-  // Handle forgot password submission
-  // ─────────────────────────────────
-  // Event Handlers
-  // ─────────────────────────────────
+  // [E1.7] Step 1 of 2: user submits their email to receive a 6-digit reset token
+  // Step 2 is on the /reset-password page where they enter the token and set a new password
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -31,14 +27,12 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "/api/auth/forgot-password",
-        {
-          email,
-        },
-      );
+      const res = await axios.post("/api/auth/forgot-password", {
+        email,
+      });
 
       setMessage(res.data.message);
+      // Dev/demo only: token is displayed on-screen for testing; in production it would be email-only
       setResetToken(res.data.resetToken); // Display token
     } catch (err) {
       setError(err.response?.data?.message || "Error sending reset email");
@@ -47,9 +41,7 @@ const ForgotPassword = () => {
     }
   };
 
-  // ─────────────────────────────────
   // Render
-  // ─────────────────────────────────
   return (
     <div className="forgot-password-page">
       <div className="forgot-password-container">

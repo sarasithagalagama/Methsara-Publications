@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // AdminOrders
 // Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
@@ -18,9 +18,7 @@ import "../../../components/dashboard/dashboard.css";
 import "./AdminDashboard.css";
 
 const AdminOrders = () => {
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -33,16 +31,12 @@ const AdminOrders = () => {
     message: "",
   });
 
-  // ─────────────────────────────────
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -132,9 +126,7 @@ const AdminOrders = () => {
   ];
 
   if (loading) {
-    // ─────────────────────────────────
     // Render
-    // ─────────────────────────────────
     return (
       <div className="dashboard-container">
         <div className="loading-spinner">
