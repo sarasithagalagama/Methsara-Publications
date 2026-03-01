@@ -23,6 +23,8 @@ const userSchema = new mongoose.Schema({
     trim: true,
     match: [/^\S+@\S+\.\S+$/, "Please provide a valid email"],
   },
+  // [E1.2] select: false ensures password hash is never included in query results by default
+  // Use .select("+password") explicitly only when needed (login flow)
   password: {
     type: String,
     required: [true, "Password is required"],
@@ -41,7 +43,8 @@ const userSchema = new mongoose.Schema({
     default: "customer",
   },
 
-  // Role-Based Access Control (RBAC)
+  // [E1.3] role: drives the entire permission system; 8 roles map to 8 staff functions
+  // customer = public buyer; admin = superuser; IM roles = stock management; others = departmental
   role: {
     type: String,
     enum: [
@@ -57,7 +60,8 @@ const userSchema = new mongoose.Schema({
     default: "customer",
   },
 
-  // Location Assignment (for inventory managers)
+  // [E5.1] assignedLocation: restricts location_inventory_manager to a single branch
+  // master_inventory_manager has assignedLocation = "All" (checked in authorizeLocation middleware)
   assignedLocation: {
     type: String,
     default: null,
@@ -90,7 +94,8 @@ const userSchema = new mongoose.Schema({
   resetPasswordToken: String,
   resetPasswordExpire: Date,
 
-  // Force password change on first login (staff only)
+  // [E1.8] mustChangePassword: set true when admin creates a staff account with temp password
+  // Frontend checks this flag after login and redirects to forced password reset page
   mustChangePassword: {
     type: Boolean,
     default: false,
@@ -158,7 +163,8 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// Hash password before saving
+// [E1.1][E1.8] Pre-save hook: hashes password with bcrypt (cost factor 10) before persisting
+// isModified check prevents re-hashing on unrelated document updates
 userSchema.pre("save", async function (next) {
   // Only hash if password is modified
   if (!this.isModified("password")) {
@@ -171,7 +177,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-// Method to compare passwords
+// [E1.2] comparePassword: instance method used in login flow to verify plaintext against stored hash
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
