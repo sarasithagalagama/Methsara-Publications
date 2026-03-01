@@ -1,6 +1,6 @@
-﻿// ============================================
+// ============================================
 // Reset Password Page
-// Epic: E1 - User & Admin Management
+// Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
 // Purpose: Password reset with token (E1.7)
 // ============================================
@@ -11,9 +11,7 @@ import axios from "axios";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [formData, setFormData] = useState({
     token: "",
     newPassword: "",
@@ -24,9 +22,7 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
 
   // Handle input changes
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -34,7 +30,7 @@ const ResetPassword = () => {
     });
   };
 
-  // Handle password reset submission
+  // [E1.7] Step 2 of 2: user submits the emailed token and their new password to complete the reset
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -55,17 +51,14 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "/api/auth/reset-password",
-        {
-          token: formData.token,
-          newPassword: formData.newPassword,
-        },
-      );
+      const res = await axios.post("/api/auth/reset-password", {
+        token: formData.token,
+        newPassword: formData.newPassword,
+      });
 
       setMessage(res.data.message);
 
-      // Redirect to login after 2 seconds
+      // Auto-redirect to login after 2 seconds so the user can read the success message
       setTimeout(() => {
         navigate("/login");
       }, 2000);
@@ -76,9 +69,7 @@ const ResetPassword = () => {
     }
   };
 
-  // ─────────────────────────────────
   // Render
-  // ─────────────────────────────────
   return (
     <div className="reset-password-page">
       <div className="reset-password-container">

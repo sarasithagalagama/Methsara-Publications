@@ -1,3 +1,10 @@
+// ============================================
+// Approval Routes
+// Epic: E1 - User & Role Management
+// Owner: IT24100548 (Galagama S.T)
+// Purpose: Admin approval workflow API endpoints
+// ============================================
+
 const express = require("express");
 const router = express.Router();
 const {

@@ -1,6 +1,7 @@
 // ============================================
 // Force Password Reset Modal
-// Epic: E1 - User & Admin Management
+// Epic: E1 - User & Role Management
+// Owner: IT24100548 (Galagama S.T)
 // Purpose: Screen overlay demanding a new password
 // ============================================
 
@@ -8,6 +9,8 @@ import React, { useState } from "react";
 import axios from "axios";
 
 const ForcePasswordResetModal = ({ onSuccess, logout }) => {
+  // [E1.8] No currentPassword required — admin has already cleared the old password via the force-reset flag
+  // Uses /force-change-password endpoint which bypasses current-password verification
   const [formData, setFormData] = useState({
     newPassword: "",
     confirmPassword: "",

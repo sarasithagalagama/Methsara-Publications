@@ -1,13 +1,13 @@
 ﻿// ============================================
 // Account Deactivation Endpoint
-// Epic: E1 - User & Admin Management
-// Owner: IT24100191 (Jayasinghe D.B.P)
+// Epic: E1 - User & Role Management
+// Owner: IT24100548 (Galagama S.T)
 // Purpose: Deactivate user accounts (E1.10)
 // ============================================
 
 // Add to authController.js
 
-// Deactivate Account (E1.10)
+// [E1.10] deactivateAccount: admin sets isActive=false; protect middleware will then block further logins
 exports.deactivateAccount = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -20,6 +20,7 @@ exports.deactivateAccount = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
+    // [E1.10] isActive=false is checked in the protect middleware; existing tokens are blocked immediately
     user.isActive = false;
     user.deactivationReason = reason || "Deactivated by admin";
     user.deactivatedAt = Date.now();

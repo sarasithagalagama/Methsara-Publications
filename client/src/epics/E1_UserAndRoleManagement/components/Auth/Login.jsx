@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Login Component
 // Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
@@ -12,9 +12,7 @@ import "./Auth.css";
 
 function Login({ setUser }) {
   const navigate = useNavigate();
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -23,9 +21,7 @@ function Login({ setUser }) {
   const [loading, setLoading] = useState(false);
 
   // Handle input changes
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -65,9 +61,7 @@ function Login({ setUser }) {
     }
   };
 
-  // ─────────────────────────────────
   // Render
-  // ─────────────────────────────────
   return (
     <div className="auth-container">
       <div className="auth-card card">

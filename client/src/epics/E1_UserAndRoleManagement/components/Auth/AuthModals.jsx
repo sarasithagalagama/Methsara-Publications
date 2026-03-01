@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // AuthModals
 // Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
@@ -21,11 +21,9 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import "./AuthModals.css";
 
-// --- LOGIN MODAL ---
+// Login Modal
 export const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,9 +32,7 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // ─────────────────────────────────
-  // Side Effects
-  // ─────────────────────────────────
+  // Locks page scroll while any auth modal is open — prevents background scrolling
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -44,9 +40,7 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
     } else {
       document.body.style.overflow = "unset";
     }
-    // ─────────────────────────────────
-    // Render
-    // ─────────────────────────────────
+    // Cleanup: always restore scroll when modal unmounts
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -54,9 +48,7 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
 
   if (!isOpen) return null;
 
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -70,7 +62,7 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
 
     if (result.success) {
       onClose();
-      // Role-based navigation
+      // [E1.6] RBAC routing: customers go to /customer/dashboard, staff go to their role-specific dashboard
       const { role } = result.user;
       if (role === "customer") navigate("/customer/dashboard");
       else if (role === "admin") navigate("/admin/dashboard");
@@ -133,7 +125,7 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
                   type={showPassword ? "text" : "password"}
                   name="password"
                   className="form-input"
-                  placeholder="••••••••"
+                  placeholder="��������"
                   value={formData.password}
                   onChange={handleChange}
                   required
@@ -181,7 +173,7 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
   );
 };
 
-// --- REGISTER MODAL ---
+// Register Modal
 export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -261,7 +253,7 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
     e.preventDefault();
     setGeneralError("");
 
-    // Final check for all fields
+    // Final check for all fields before submitting the registration form
     const newErrors = {};
     Object.keys(formData).forEach((key) => {
       const err = validate(key, formData[key]);
@@ -395,7 +387,7 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                     type="password"
                     name="password"
                     className={`form-input ${errors.password ? "input-error" : ""}`}
-                    placeholder="••••••••"
+                    placeholder="��������"
                     value={formData.password}
                     onChange={handleChange}
                     required
@@ -413,7 +405,7 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
                     type="password"
                     name="confirmPassword"
                     className={`form-input ${errors.confirmPassword ? "input-error" : ""}`}
-                    placeholder="••••••••"
+                    placeholder="��������"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
@@ -453,7 +445,7 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   );
 };
 
-// --- LOGOUT MODAL ---
+// Logout Modal
 export const LogoutModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
 

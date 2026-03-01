@@ -15,7 +15,7 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
 
-    // Check if user already exists
+    // [E1.1] Prevent duplicate accounts by checking email uniqueness before creation
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -24,7 +24,7 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Create customer account
+    // [E1.1] New customers always get role='customer'; isEmailVerified=true (TODO: real email service)
     const user = await User.create({
       name,
       email,
@@ -35,7 +35,7 @@ exports.register = async (req, res) => {
       isEmailVerified: true, // TODO: Implement email verification service
     });
 
-    // Generate token
+    // [E1.2] Issue JWT immediately after registration so user is logged in straight away
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -71,7 +71,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Find user (include password for comparison)
+    // [E1.2] Must use .select("+password") because password has select:false in the User schema
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
@@ -81,7 +81,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check password
+    // [E1.2] comparePassword uses bcrypt.compare to safely check plaintext against stored hash
     const isPasswordMatch = await user.comparePassword(password);
 
     if (!isPasswordMatch) {
@@ -91,7 +91,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check if account is active
+    // [E1.8] Block login for deactivated accounts even when password is correct
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
@@ -103,15 +103,16 @@ exports.login = async (req, res) => {
     user.lastLogin = Date.now();
     await user.save();
 
-    // Generate token
+    // [E1.2] Sign a new JWT bound to this user's _id
     const token = generateToken(user._id);
 
-    // Track Session
+    // [E1.13] Parse the User-Agent header to generate a human-readable device string for the sessions dashboard
     const parser = new UAParser(req.headers["user-agent"]);
     const browser = parser.getBrowser();
     const os = parser.getOS();
     const deviceStr = `${browser.name || "Unknown Browser"} on ${os.name || "Unknown OS"}`;
 
+    // [E1.13] Create a Session record so the user can see and revoke their active sessions
     await Session.create({
       user: user._id,
       token,
@@ -120,6 +121,7 @@ exports.login = async (req, res) => {
       device: deviceStr,
     });
 
+    // [E1.8] mustChangePassword is included in response so frontend can redirect to forced-reset screen
     res.status(200).json({
       success: true,
       message: "Login successful",
@@ -161,7 +163,7 @@ exports.getMe = async (req, res) => {
   }
 };
 
-// Create Staff Account (Admin only)
+// [E1.4] Create Staff Account (Admin only) — sets userType='staff', role from payload, mustChangePassword=true
 exports.createStaff = async (req, res) => {
   try {
     const {
@@ -189,6 +191,54 @@ exports.createStaff = async (req, res) => {
         success: false,
         message: "Email already registered",
       });
+    }
+
+    // Validate date of birth
+    if (dateOfBirth) {
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+
+      // Check if date is valid
+      if (isNaN(birthDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid date of birth format",
+        });
+      }
+
+      // Check if date is not in the future
+      if (birthDate >= today) {
+        return res.status(400).json({
+          success: false,
+          message: "Date of birth cannot be today or in the future",
+        });
+      }
+
+      // Calculate age
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
+        age--;
+      }
+
+      // Check minimum age (18 years)
+      if (age < 18) {
+        return res.status(400).json({
+          success: false,
+          message: "User must be at least 18 years old",
+        });
+      }
+
+      // Check maximum age (100 years - reasonable upper bound)
+      if (age > 100) {
+        return res.status(400).json({
+          success: false,
+          message: "Please enter a valid date of birth",
+        });
+      }
     }
 
     // Create staff account
@@ -508,7 +558,8 @@ exports.updateUser = async (req, res) => {
     if (nic && nic.trim() && !nicOldRegex.test(nic) && !nicNewRegex.test(nic)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid NIC format (9 digits + V/X, or 12 digits)",
+        message:
+          "Invalid NIC format (Old: 9 digits + V/X (required), e.g., 123456789V | New: 12 digits, e.g., 200331810088)",
       });
     }
     if (emergencyContactPhone && !phoneRegex.test(emergencyContactPhone)) {
@@ -516,6 +567,54 @@ exports.updateUser = async (req, res) => {
         success: false,
         message: "Emergency contact phone must be 10 digits",
       });
+    }
+
+    // Validate date of birth if provided
+    if (dateOfBirth) {
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+
+      // Check if date is valid
+      if (isNaN(birthDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid date of birth format",
+        });
+      }
+
+      // Check if date is not in the future
+      if (birthDate >= today) {
+        return res.status(400).json({
+          success: false,
+          message: "Date of birth cannot be today or in the future",
+        });
+      }
+
+      // Calculate age
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (
+        monthDiff < 0 ||
+        (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ) {
+        age--;
+      }
+
+      // Check minimum age (18 years)
+      if (age < 18) {
+        return res.status(400).json({
+          success: false,
+          message: "User must be at least 18 years old",
+        });
+      }
+
+      // Check maximum age (100 years - reasonable upper bound)
+      if (age > 100) {
+        return res.status(400).json({
+          success: false,
+          message: "Please enter a valid date of birth",
+        });
+      }
     }
     // ---- End Validation ----
 
@@ -537,6 +636,14 @@ exports.updateUser = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "User not found",
+      });
+    }
+
+    // Prevent admins from editing customer accounts
+    if (user.userType === "customer") {
+      return res.status(403).json({
+        success: false,
+        message: "Cannot edit customer accounts from staff management panel",
       });
     }
 
@@ -562,7 +669,14 @@ exports.updateUser = async (req, res) => {
     }
 
     if (req.body.salary !== undefined) {
-      user.salary = req.body.salary;
+      const parsedSalary = parseFloat(req.body.salary);
+      if (isNaN(parsedSalary) || parsedSalary < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Salary must be a valid non-negative number",
+        });
+      }
+      user.salary = parsedSalary;
     }
 
     await user.save();

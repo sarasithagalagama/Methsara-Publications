@@ -1,5 +1,7 @@
 ﻿// ============================================
 // Approval Controller
+// Epic: E1 - User & Role Management
+// Owner: IT24100548 (Galagama S.T)
 // Purpose: Handle Admin Approval Workflow
 // ============================================
 
@@ -9,8 +11,10 @@ const Supplier = require("../../E4_SupplierManagement/models/Supplier");
 const Inventory = require("../../E5_InventoryManagement/models/Inventory");
 const Product = require("../../E2_ProductCatalog/models/Product");
 
+// [E1.12] getPendingRequests: returns all unreviewed requests; cross-epic workflow — data from E3/E4/E5
 exports.getPendingRequests = async (req, res) => {
   try {
+    // [E1.12] Populate requestedBy so admin can see who made the change request (name, email, role)
     const requests = await ApprovalRequest.find({ status: "Pending" })
       .populate("requestedBy", "name email role")
       .sort({ createdAt: -1 });
@@ -30,6 +34,7 @@ exports.getPendingRequests = async (req, res) => {
   }
 };
 
+// [E1.12] reviewRequest: apply or reject a pending change request; master IM limited to Product/Inventory
 exports.reviewRequest = async (req, res) => {
   try {
     const { status, remarks } = req.body; // Approved or Rejected
@@ -49,7 +54,7 @@ exports.reviewRequest = async (req, res) => {
       });
     }
 
-    // Role-based restrictions
+    // [E1.12] Role-based module restrictions: master IM can only approve Product and Inventory requests
     if (req.user.role === "master_inventory_manager") {
       if (request.module !== "Product" && request.module !== "Inventory") {
         return res.status(403).json({
@@ -61,7 +66,7 @@ exports.reviewRequest = async (req, res) => {
     }
 
     if (status === "Approved") {
-      // Apply the target data based on the module
+      // [E1.12] Apply targetData to the correct model based on module — handles 4 cross-epic models
       switch (request.module) {
         case "FinancialTransaction":
           await FinancialTransaction.findByIdAndUpdate(

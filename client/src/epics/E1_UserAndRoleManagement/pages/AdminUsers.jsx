@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // AdminUsers
 // Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
@@ -20,9 +20,7 @@ import "../../../components/dashboard/dashboard.css";
 import "./AdminDashboard.css";
 
 const AdminUsers = () => {
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [roleFilter, setRoleFilter] = useState("all");
@@ -64,16 +62,12 @@ const AdminUsers = () => {
     nicBackImage: null,
   });
 
-  // ─────────────────────────────────
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -88,6 +82,7 @@ const AdminUsers = () => {
     }
   };
 
+  // [E1.8] Admin flags a staff account to force a password change on their next login
   const handleForceReset = async (userId) => {
     setConfirmModal({
       isOpen: true,
@@ -127,6 +122,7 @@ const AdminUsers = () => {
     });
   };
 
+  // [E1.10] Deactivating immediately prevents login without permanently deleting the account
   const handleDeactivateUser = (userId) => {
     setConfirmModal({
       isOpen: true,
@@ -190,11 +186,45 @@ const AdminUsers = () => {
     setFormErrors({});
   };
 
+  // Helper function to validate date of birth
+  const validateDateOfBirth = (dob) => {
+    if (!dob) return "Date of birth is required";
+
+    const birthDate = new Date(dob);
+    const today = new Date();
+
+    // Check if date is valid
+    if (isNaN(birthDate.getTime())) return "Invalid date format";
+
+    // Check if date is not in the future
+    if (birthDate >= today)
+      return "Date of birth cannot be today or in the future";
+
+    // Calculate age
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    // Check minimum age (18 years)
+    if (age < 18) return "User must be at least 18 years old";
+
+    // Check maximum age (100 years - reasonable upper bound)
+    if (age > 100) return "Please enter a valid date of birth";
+
+    return null; // Valid
+  };
+
   const validateEditForm = () => {
     const errors = {};
     const nameRegex = /^[a-zA-Z\s]*$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^\d{10}$/;
+    // Sri Lanka NIC: old format = 9 digits + V/X, new format = 12 digits
     const nicOldRegex = /^\d{9}[VXvx]$/;
     const nicNewRegex = /^\d{12}$/;
 
@@ -211,7 +241,14 @@ const AdminUsers = () => {
 
     if (formData.nic && formData.nic.trim()) {
       if (!nicOldRegex.test(formData.nic) && !nicNewRegex.test(formData.nic))
-        errors.nic = "Invalid NIC format (9 digits + V/X, or 12 digits)";
+        errors.nic =
+          "Invalid NIC format (Old: 9 digits + V/X (required), e.g., 123456789V | New: 12 digits, e.g., 200331810088)";
+    }
+
+    // Validate date of birth
+    if (formData.dateOfBirth) {
+      const dobError = validateDateOfBirth(formData.dateOfBirth);
+      if (dobError) errors.dateOfBirth = dobError;
     }
 
     if (
@@ -252,6 +289,7 @@ const AdminUsers = () => {
         nicFrontImage: formData.nicFrontImage,
         nicBackImage: formData.nicBackImage,
       };
+      // [E1.5] Location scoping: inventory managers are tied to one branch; master sees all; others have no location
       if (formData.role === "location_inventory_manager") {
         updateData.assignedLocation = formData.assignedLocation;
       } else if (formData.role === "master_inventory_manager") {
@@ -320,7 +358,10 @@ const AdminUsers = () => {
     const file = files[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      alert("File is too large. Please select a file under 5MB.");
+      setFormErrors((prev) => ({
+        ...prev,
+        [name]: "File is too large. Please select an image under 5MB.",
+      }));
       e.target.value = "";
       return;
     }
@@ -377,9 +418,12 @@ const AdminUsers = () => {
     const nicNewRegex = /^\d{12}$/;
     if (formData.nic && formData.nic.trim()) {
       if (!nicOldRegex.test(formData.nic) && !nicNewRegex.test(formData.nic))
-        errors.nic = "Invalid NIC format";
+        errors.nic =
+          "Invalid NIC format (Old: 9 digits + V/X (required), e.g., 123456789V | New: 12 digits, e.g., 200331810088)";
     }
-    if (!formData.dateOfBirth) errors.dateOfBirth = "Date of birth is required";
+    // Validate date of birth
+    const dobError = validateDateOfBirth(formData.dateOfBirth);
+    if (dobError) errors.dateOfBirth = dobError;
     if (!formData.address.trim()) errors.address = "Address is required";
     if (!formData.city.trim()) errors.city = "City is required";
     if (!formData.emergencyContactName.trim())
@@ -487,9 +531,7 @@ const AdminUsers = () => {
   ];
 
   if (loading) {
-    // ─────────────────────────────────
     // Render
-    // ─────────────────────────────────
     return (
       <div className="dashboard-container">
         <div className="loading-spinner">
@@ -581,7 +623,7 @@ const AdminUsers = () => {
         <Modal
           isOpen={!!editingUser}
           onClose={() => setEditingUser(null)}
-          title={`Edit User – ${editingUser.name}`}
+          title={`Edit User ${editingUser.name}`}
           size="lg"
         >
           <form onSubmit={handleEditSubmit} className="dashboard-form">
@@ -603,7 +645,7 @@ const AdminUsers = () => {
                     name="nic"
                     value={formData.nic}
                     onChange={handleInputChange}
-                    placeholder="e.g., 123456789V or 199012345678"
+                    placeholder="e.g., 123456789V or 200331810088"
                     error={formErrors.nic}
                   />
                 </div>
@@ -650,7 +692,7 @@ const AdminUsers = () => {
                           marginTop: "0.5rem",
                         }}
                       >
-                        ✓ Image loaded
+                        ? Image loaded
                       </p>
                     )}
                   </div>
@@ -671,7 +713,7 @@ const AdminUsers = () => {
                           marginTop: "0.5rem",
                         }}
                       >
-                        ✓ Image loaded
+                        ? Image loaded
                       </p>
                     )}
                   </div>
@@ -854,7 +896,7 @@ const AdminUsers = () => {
                     name="nic"
                     value={formData.nic}
                     onChange={handleInputChange}
-                    placeholder="e.g., 123456789V or 199012345678"
+                    placeholder="e.g., 123456789V or 200331810088"
                     error={formErrors.nic}
                   />
                 </div>

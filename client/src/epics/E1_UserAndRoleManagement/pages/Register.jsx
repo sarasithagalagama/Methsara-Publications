@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Register
 // Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
@@ -11,9 +11,7 @@ import { AlertCircle, UserPlus } from "lucide-react";
 import "./Auth.css";
 
 const Register = () => {
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -28,9 +26,7 @@ const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  // ─────────────────────────────────
-  // Event Handlers
-  // ─────────────────────────────────
+  // [E1.1] Real-time field validation — errors are shown and cleared as the user types
   const handleChange = (e) => {
     const { name, value } = e.target;
     let newErrors = { ...formErrors };
@@ -64,6 +60,14 @@ const Register = () => {
         } else {
           delete newErrors.password;
         }
+        // Re-validate confirmPassword when password field changes to catch stale mismatches
+        if (formData.confirmPassword) {
+          if (value !== formData.confirmPassword) {
+            newErrors.confirmPassword = "Mismatch";
+          } else {
+            delete newErrors.confirmPassword;
+          }
+        }
         break;
       case "confirmPassword":
         if (value !== formData.password) {
@@ -90,6 +94,7 @@ const Register = () => {
     }
 
     setLoading(true);
+    // confirmPassword is a UI-only check — it is never sent to the API
     const result = await register({
       name: formData.name,
       email: formData.email,
@@ -105,9 +110,7 @@ const Register = () => {
     }
   };
 
-  // ─────────────────────────────────
   // Render
-  // ─────────────────────────────────
   return (
     <div className="auth-page">
       <div className="auth-container" style={{ maxWidth: "600px" }}>
@@ -198,7 +201,7 @@ const Register = () => {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  placeholder="••••••••"
+                  placeholder="��������"
                 />
                 {formErrors.password && (
                   <small className="form-error">{formErrors.password}</small>
@@ -213,7 +216,7 @@ const Register = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  placeholder="••••••••"
+                  placeholder="��������"
                 />
                 {formErrors.confirmPassword && (
                   <small className="form-error">

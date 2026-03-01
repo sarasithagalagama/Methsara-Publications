@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // AdminSettings
 // Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
@@ -34,6 +34,7 @@ import toast from "react-hot-toast";
 import "../../../components/dashboard/dashboard.css";
 import "./AdminSettings.css";
 
+// [E1.6] All 8 system roles — displayed in the Settings overview to explain the RBAC structure
 const roles = [
   {
     icon: <Shield size={20} />,
@@ -97,9 +98,7 @@ const roles = [
 ];
 
 const AdminSettings = () => {
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [activeTab, setActiveTab] = useState("overview"); // overview, locations, security
   const [locations, setLocations] = useState([]);
   const [loadingLocations, setLoadingLocations] = useState(false);
@@ -124,10 +123,7 @@ const AdminSettings = () => {
     isMainWarehouse: false,
   });
 
-  // Fetch locations
-  // ─────────────────────────────────
-  // Event Handlers
-  // ─────────────────────────────────
+  // [E1.5] Branch location management — locations are fetched only when the Locations tab is active
   const fetchLocations = async () => {
     try {
       setLoadingLocations(true);
@@ -144,9 +140,7 @@ const AdminSettings = () => {
     }
   };
 
-  // ─────────────────────────────────
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     if (activeTab === "locations") {
       fetchLocations();
@@ -155,6 +149,7 @@ const AdminSettings = () => {
     }
   }, [activeTab]);
 
+  // [E1.11] Security logs: tracks login events and admin actions for auditing suspicious activity
   const fetchSecurityLogs = async () => {
     try {
       setLoadingLogs(true);
@@ -175,6 +170,7 @@ const AdminSettings = () => {
     }
   };
 
+  // Admin can forcefully terminate a specific user session (instant remote logout)
   const handleRevokeSession = (session) => {
     setConfirmModal({
       isOpen: true,
@@ -204,6 +200,7 @@ const AdminSettings = () => {
     });
   };
 
+  // Handles both create and update — uses editingLocation state to determine which operation to run
   const handleLocationSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -310,9 +307,7 @@ const AdminSettings = () => {
     },
   ];
 
-  // ─────────────────────────────────
   // Render
-  // ─────────────────────────────────
   return (
     <div className="dashboard-container">
       <DashboardHeader
