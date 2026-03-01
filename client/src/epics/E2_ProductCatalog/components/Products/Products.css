@@ -1,0 +1,306 @@
+/* ============================================
+   Product & Book Catalog Styles
+   Epic: E2 - Product Catalog
+   Owner: IT24101314
+   ============================================ */
+
+.detail-container {
+  max-width: 1200px;
+  margin: 100px auto;
+  padding: 0 var(--spacing-lg);
+}
+
+/* Product Card Enhancements */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  background: white;
+}
+
+.product-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--secondary-light);
+}
+
+.product-image {
+  position: relative;
+  height: 280px;
+  background-color: #f8f9fa;
+}
+
+.featured-badge {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 2;
+}
+
+.sinhala-title {
+  font-family: 'Abhaya Libre', serif;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.product-author {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: 0.02em;
+}
+
+/* Product Detail Page */
+.product-detail {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 60px;
+}
+
+.detail-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  color: var(--primary-dark);
+  margin-bottom: 5px;
+  line-height: 1.2;
+}
+
+.detail-title-sinhala {
+  font-family: 'Abhaya Libre', serif;
+  font-size: 1.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.author-block {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 25px;
+}
+
+.dot-separator {
+  color: var(--secondary-color);
+  font-weight: bold;
+}
+
+.product-stats-bar {
+  display: flex;
+  gap: 30px;
+  padding: 15px 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 25px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.book-specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.spec-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.description-section h3 {
+  font-family: 'Playfair Display', serif;
+  margin-bottom: 15px;
+  color: var(--primary-dark);
+}
+
+.product-description {
+  line-height: 1.8;
+  color: var(--text-primary);
+  opacity: 0.85;
+}
+
+/* Purchase Section */
+.purchase-section {
+  background: var(--bg-color);
+  padding: 30px;
+  border-radius: var(--radius-xl);
+  margin-top: 40px;
+  display: flex;
+  align-items: flex-end;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.price-tag {
+  display: flex;
+  flex-direction: column;
+}
+
+.price-tag .currency {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.price-tag .amount {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  line-height: 1;
+}
+
+.quantity-selector-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quantity-selector-block label {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+
+.qty-btn {
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--border-color);
+  background: white;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.qty-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.qty-input {
+  width: 60px;
+  height: 40px;
+  text-align: center;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-weight: 700;
+}
+
+.btn-add-to-cart {
+  flex: 1;
+  height: 60px;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(93, 64, 55, 0.2);
+}
+
+.btn-add-to-cart:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(93, 64, 55, 0.3);
+  filter: brightness(1.1);
+}
+
+/* Back Cover */
+.back-cover {
+  position: relative;
+}
+
+.image-label {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* Reviews Styling */
+.reviews-detail-section {
+  margin-top: 50px;
+  border-top: 2px solid var(--border-color);
+  padding-top: 40px;
+}
+
+.review-card {
+  background: white;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  margin-bottom: 20px;
+}
+
+.review-user-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.review-stars {
+  display: flex;
+  gap: 4px;
+}
+
+.no-reviews {
+  text-align: center;
+  padding: 60px;
+  color: var(--text-secondary);
+  background: var(--bg-color);
+  border-radius: var(--radius-xl);
+}
+
+@media (max-width: 992px) {
+  .product-detail {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  
+  .detail-title {
+    font-size: 2rem;
+  }
+  
+  .purchase-section {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    margin-top: 0;
+    border-radius: 0;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+    background: white;
+    padding: 15px var(--spacing-lg);
+  }
+  
+  .detail-container {
+    padding-bottom: 120px;
+  }
+}
