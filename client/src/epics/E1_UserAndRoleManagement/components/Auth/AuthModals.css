@@ -94,26 +94,67 @@
 }
 
 .input-wrapper {
-  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.input-wrapper:focus-within {
+  background-color: white;
+  border-color: #A6705D;
+  box-shadow: 0 0 0 4px rgba(166, 112, 93, 0.1);
+}
+
+.input-wrapper.input-error-wrapper {
+  border-color: #ef4444;
+}
+
+.input-icon {
+  flex-shrink: 0;
+  color: #94a3b8;
+  padding-left: 1rem;
+  pointer-events: none;
   display: flex;
   align-items: center;
 }
 
-.input-icon {
-  position: absolute;
-  left: 1rem;
-  color: #94a3b8;
-  pointer-events: none;
+.auth-modal-container .form-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.75rem 0.25rem 0.75rem 0.5rem;
+  border: none;
+  border-radius: 0;
+  font-size: 0.9rem;
+  background: transparent;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
 }
 
-.auth-modal-container .form-input {
-  width: 100%;
-  padding: 0.75rem 1.25rem 0.75rem 2.75rem;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  background-color: #f8fafc;
+.auth-toggle-btn {
+  flex-shrink: 0;
+  padding: 0 0.75rem;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.auth-toggle-btn:hover {
+  color: #64748b;
+}
+
+.auth-modal-container .form-input:focus {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  outline: none;
 }
 
 .auth-modal-container .form-input:focus {
@@ -123,7 +164,7 @@
   outline: none;
 }
 
-.input-error {
+.input-error-wrapper {
   border-color: #ef4444 !important;
 }
 

@@ -19,6 +19,8 @@ import {
   Tags,
   Megaphone,
   Gift,
+  ShoppingBag, // Sales Orders
+  TrendingDown, // Debt Tracker
 } from "lucide-react";
 import logo from "../../assets/logo.png";
 import "./dashboard.css";
@@ -200,14 +202,24 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             label: "Overview",
           },
           {
+            path: "/supplier-manager/suppliers",
+            icon: <Truck size={20} />,
+            label: "Partner Directory",
+          },
+          {
             path: "/supplier-manager/purchase-orders",
             icon: <ClipboardList size={20} />,
             label: "Purchase Orders",
           },
           {
-            path: "/supplier-manager/suppliers",
-            icon: <Truck size={20} />,
-            label: "Suppliers",
+            path: "/supplier-manager/sales-orders",
+            icon: <ShoppingBag size={20} />,
+            label: "Sales Orders",
+          },
+          {
+            path: "/supplier-manager/debt-tracker",
+            icon: <TrendingDown size={20} />,
+            label: "Debt Tracker",
           },
         ];
       case "product_manager":

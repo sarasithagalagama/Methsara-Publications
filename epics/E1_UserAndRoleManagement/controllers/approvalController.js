@@ -87,14 +87,25 @@ exports.reviewRequest = async (req, res) => {
             const inventory = await Inventory.findById(request.documentId);
             if (inventory) {
               // targetData contains adjustment details
-              inventory.quantity += request.targetData.quantityChange;
-              inventory.movements.push({
-                type: request.targetData.type,
-                quantity: Math.abs(request.targetData.quantityChange),
-                reason:
-                  request.targetData.reason || "Admin Approved Adjustment",
-                performedBy: request.requestedBy,
-              });
+              const quantityChange = request.targetData.quantityChange;
+              const reason =
+                request.targetData.reason || "Admin Approved Adjustment";
+              if (quantityChange > 0) {
+                inventory.addStock(quantityChange, reason, request.requestedBy);
+              } else if (quantityChange < 0) {
+                try {
+                  inventory.deductStock(
+                    Math.abs(quantityChange),
+                    reason,
+                    request.requestedBy,
+                  );
+                } catch (err) {
+                  return res.status(400).json({
+                    success: false,
+                    message: `Cannot apply approved adjustment: ${err.message}`,
+                  });
+                }
+              }
               await inventory.save();
             }
           } else if (request.action === "Update") {

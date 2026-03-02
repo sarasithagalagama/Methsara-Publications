@@ -229,75 +229,111 @@ role:     { enum: ['customer','admin','master_inventory_manager', ...] }
 
 ---
 
-## 7. How to Change Colors (Frontend)
+## 7. User Stories
 
-The frontend for E1 (login, registration, profile pages) uses **Tailwind CSS**.
-
-### Step 1 — Global Theme Colors
-Edit `client/tailwind.config.js`:
-```javascript
-theme: {
-  extend: {
-    colors: {
-      primary: '#1E40AF',    // change this for buttons, links
-      secondary: '#9333EA',  // change this for accents
-    }
-  }
-}
-```
-
-### Step 2 — Component-Level
-Find the login page component (e.g., `client/src/epics/E1_UserAndRoleManagement/`) and change `className` values:
-```jsx
-// Before
-<button className="bg-blue-600 text-white ...">Login</button>
-
-// After
-<button className="bg-primary text-white ...">Login</button>
-```
-
-### Step 3 — Global CSS
-For base styles, edit `client/src/index.css` or `client/src/App.css`.
+| # | As a… | I want to… | So that… |
+|---|---|---|---|
+| US-1.1 | New customer | Register an account with my name, email, and password | I can place orders and track my purchase history |
+| US-1.2 | Customer | Log in securely using my email and password | I can access my personal dashboard and manage orders |
+| US-1.3 | Customer | Reset my password via a link sent to my email | I can regain access if I forget my password |
+| US-1.4 | Customer | Update my profile (name, phone, delivery address) | My orders are delivered to the correct address |
+| US-1.5 | Customer | View all my active login sessions | I know which devices are currently signed in to my account |
+| US-1.6 | Customer | Log out from a specific device remotely | I can secure my account if I lose access to a device |
+| US-1.7 | Admin | Create staff accounts with specific roles | Each team member can access only their relevant module |
+| US-1.8 | Admin | Deactivate a staff account immediately | Terminated employees lose system access without delay |
+| US-1.9 | Admin | View the list of all users filtered by role or status | I can audit accounts and spot suspicious or inactive users |
+| US-1.10 | Admin | View security logs (login/logout activity) | I can detect and investigate unauthorized access attempts |
+| US-1.11 | Admin | Force a password reset for any staff account | I can enforce security policy when credentials are compromised |
+| US-1.12 | Admin | Approve or reject pending change requests | Sensitive data changes are verified by a second person before going live |
+| US-1.13 | Supplier Manager | Submit a supplier field update as a change request | Updates to critical fields (e.g., bank details) are reviewed before applying |
+| US-1.14 | Location Inventory Manager | Submit a stock adjustment request | Manual stock changes are reviewed by a master manager before taking effect |
 
 ---
 
-## 8. Viva Q&A
+## 8. Frontend Implementation
 
-**Q1: Why do you use JWT instead of sessions stored in the database for authentication?**  
-A: JWTs are stateless — the server does not need to look up a session record on every request. The token itself contains the user ID and is cryptographically signed. However, in this project we ALSO store session records in MongoDB (`Session` collection) so we can revoke individual sessions (e.g., logout from a specific device). This gives us the best of both worlds: stateless verification speed + revocation capability.
+### Component Map
 
-**Q2: Why are there 8 roles instead of just "admin" and "user"?**  
-A: The principle of least privilege. Each staff member should only have access to the functionality they need for their job. A `supplier_manager` cannot view financial dashboards; a `finance_manager` cannot create products. This reduces the blast radius if an account is compromised.
+| Page / Component | File Path | What It Does |
+|---|---|---|
+| Login Page | `client/src/epics/E1_UserAndRoleManagement/pages/Login.jsx` | Email + password form; JWT stored to `localStorage`; redirects to role-specific dashboard on success |
+| Register Page | `client/src/epics/E1_UserAndRoleManagement/pages/Register.jsx` | Customer self-registration form (name, email, password, confirm password) with real-time validation |
+| Profile Page | `client/src/epics/E1_UserAndRoleManagement/pages/Profile.jsx` | Displays and edits own name, phone, address; separate form section for password change |
+| User Management | `client/src/epics/E1_UserAndRoleManagement/pages/UserManagement.jsx` | Admin table of all users; create-staff modal; inline role edit; deactivate/reactivate toggle |
+| Approval Queue | `client/src/epics/E1_UserAndRoleManagement/pages/ApprovalRequests.jsx` | Admin list of pending `ApprovalRequest` docs; approve/reject with optional reviewer notes |
+| Auth Context | `client/src/context/AuthContext.jsx` | Global React context; holds `user`, `token`, `login()`, `logout()` helpers; consumed by all protected components |
+| API Config | `client/src/api/config.js` | Shared Axios instance with `baseURL: "/api"` and request interceptor that auto-attaches `Authorization: Bearer <token>` |
 
-**Q3: What is the maker-checker pattern and why is it used?**  
-A: It's a two-person-rule for sensitive operations. When a `supplier_manager` wants to update a supplier's bank details, instead of changing the data immediately, an `ApprovalRequest` is created. An `admin` must then review and approve it. This prevents unauthorized or accidental changes to critical data.
+### Data Flow — Login
 
-**Q4: How does password reset work securely?**  
-A: A cryptographically random token is generated (`crypto.randomBytes(32)`). The **raw** token is emailed to the user. The **SHA-256 hash** of that token is stored in the database. When the user submits the token, we hash it and compare it with the stored hash. This means even if the database is breached, the raw token is not exposed.
+```
+User fills Login form
+         │
+         ▼
+POST /api/auth/login  { email, password }
+         │
+         ▼
+Server returns { token, user: { _id, name, role } }
+         │
+         ▼
+localStorage.setItem("token", token)
+AuthContext.setUser(user)
+         │
+         ▼
+React Router redirects based on user.role:
+  admin              → /admin/dashboard
+  supplier_manager   → /supplier-manager/dashboard
+  finance_manager    → /finance/dashboard
+  product_manager    → /product-manager/dashboard
+  (customer)         → / (public home)
+```
 
-**Q5: What happens when a user is deactivated?**  
-A: `isActive` is set to `false`. All their `Session` records are deleted. The `protect` middleware checks `isActive` on every request, so they cannot log in again even with a valid JWT until an admin reactivates them.
+### Data Flow — Protected Route
 
-**Q6: How does the TTL index on Session work?**  
-A: MongoDB's TTL (Time-To-Live) index automatically deletes documents after a specified number of seconds. The `createdAt` field with `expireAfterSeconds: 2592000` (30 days) means MongoDB's background task checks and deletes expired sessions every 60 seconds. No cron job needed.
+```
+User navigates to /supplier-manager/suppliers
+         │
+         ▼
+<ProtectedRoute allowedRoles={["supplier_manager","admin"]}>
+         │
+         ▼
+Reads localStorage token → checks user.role
+         │
+   ┌─────┴─────┐
+ allowed?    not allowed?
+   │              │
+renders       redirects to /unauthorized
+component
+```
 
-**Q7: What is `select: false` on the password field?**  
-A: By default, Mongoose includes all fields in query results. `select: false` on `password` means it is **never** returned in query results unless explicitly requested with `.select('+password')`. This prevents passwords from accidentally appearing in API responses.
+### Auth Token Usage Pattern
 
-**Q8: Why do you hash the JWT in the Session collection instead of storing it raw?**  
-A: If the `sessions` collection is ever leaked, stored raw JWTs could be used to make authenticated requests. Storing hashed JWTs means the attacker gets useless hashes. The comparison on logout/revocation is done by hashing the incoming token and comparing.
+Every API call from the frontend attaches the JWT via the shared Axios instance:
+```javascript
+// client/src/api/config.js
+import axios from "axios";
+const api = axios.create({ baseURL: "/api" });
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+export default api;
+```
+All epics import this `api` instance in their service files (e.g., `supplierService.js`, etc.) so the token is automatically included in every request without repetition.
 
-**Q9: What does `optionalProtect` middleware do?**  
-A: It attempts to verify a JWT token if present in the `Authorization` header, but does not reject the request if no token exists. This is used for guest checkout (E3 `createOrder`) — logged-in users get their order linked to their account, but guests can also place orders without an account.
+### Role → Dashboard Routing
 
-**Q10: How does role-based access control work technically?**  
-A: `authorize(...roles)` is a higher-order function that returns Express middleware. It reads `req.user.role` (populated by `protect`) and checks if it is in the `roles` array. If not, it returns HTTP 403. Because these are Express middleware functions chained in the route definition, they execute sequentially: protect → authorize → controller.
-
-**Q11: How are sessions managed across multiple devices?**  
-A: Each login creates a new `Session` document with the device info and IP address. A user can see all their active sessions via `GET /api/auth/sessions` and revoke any individual session using `POST /api/auth/sessions/:id/revoke`. Logging out only removes the current session, not all sessions.
-
-**Q12: What is `assignedLocation` used for?**  
-A: Location Inventory Managers are restricted to managing stock only at their assigned warehouse location. The `authorizeLocation` middleware checks that `req.user.assignedLocation` matches the location being queried in E5 inventory routes. This prevents one location manager from viewing or adjusting stock at another location.
+| Role | Dashboard Route |
+|---|---|
+| `admin` | `/admin/dashboard` |
+| `finance_manager` | `/finance/dashboard` |
+| `supplier_manager` | `/supplier-manager/dashboard` |
+| `master_inventory_manager` | `/inventory/dashboard` |
+| `location_inventory_manager` | `/inventory/dashboard` |
+| `product_manager` | `/product-manager/dashboard` |
+| `marketing_manager` | `/marketing/dashboard` |
+| `customer` | `/` (public home) |
 
 ---
 

@@ -60,6 +60,9 @@ import FinanceManagerDashboard from "./epics/E3_OrderAndTransaction/pages/Financ
 import SupplierManagerDashboard from "./epics/E4_SupplierManagement/pages/SupplierManagerDashboard";
 import CreatePurchaseOrder from "./epics/E4_SupplierManagement/pages/supplier/CreatePurchaseOrder";
 import PurchaseOrderList from "./epics/E4_SupplierManagement/pages/supplier/PurchaseOrderList";
+import SalesOrderList from "./epics/E4_SupplierManagement/pages/supplier/SalesOrderList";
+import CreateSalesOrder from "./epics/E4_SupplierManagement/pages/supplier/CreateSalesOrder";
+import DebtTracker from "./epics/E4_SupplierManagement/pages/supplier/DebtTracker";
 import SupplierPerformance from "./epics/E4_SupplierManagement/pages/supplier/SupplierPerformance";
 import DeliverySchedule from "./epics/E4_SupplierManagement/pages/supplier/DeliverySchedule";
 import SupplierList from "./epics/E4_SupplierManagement/components/Suppliers/SupplierList";
@@ -240,6 +243,36 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["supplier_manager", "admin"]}>
                   <CreatePurchaseOrder />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/supplier-manager/sales-orders"
+              element={
+                <ProtectedRoute allowedRoles={["supplier_manager", "admin"]}>
+                  <SalesOrderList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/supplier-manager/sales-orders/create"
+              element={
+                <ProtectedRoute allowedRoles={["supplier_manager", "admin"]}>
+                  <CreateSalesOrder />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/supplier-manager/debt-tracker"
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    "supplier_manager",
+                    "admin",
+                    "finance_manager",
+                  ]}
+                >
+                  <DebtTracker />
                 </ProtectedRoute>
               }
             />
