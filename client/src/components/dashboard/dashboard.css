@@ -341,6 +341,7 @@ body {
   margin-bottom: 1.5rem;
 }
 
+.dashboard-grid-5 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
 .dashboard-grid-4 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .dashboard-grid-3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 .dashboard-grid-2 { grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); }

@@ -56,6 +56,8 @@ const AdminDashboard = () => {
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [approvalRemarks, setApprovalRemarks] = useState("");
+  const [currentDocData, setCurrentDocData] = useState(null);
+  const [loadingCurrentDoc, setLoadingCurrentDoc] = useState(false);
 
   // Side Effects
   useEffect(() => {
@@ -133,6 +135,42 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Error loading dashboard:", error);
       setLoading(false);
+    }
+  };
+
+  // Fetch current document and open the diff modal
+  const openApprovalModal = async (req) => {
+    setSelectedRequest(req);
+    setApprovalRemarks("");
+    setCurrentDocData(null);
+    setShowApprovalModal(true);
+
+    const moduleEndpoints = {
+      Supplier: `/api/suppliers/${req.documentId}`,
+      Product: `/api/products/${req.documentId}`,
+      FinancialTransaction: `/api/financial/transactions/${req.documentId}`,
+    };
+    const endpoint = moduleEndpoints[req.module];
+    if (endpoint) {
+      setLoadingCurrentDoc(true);
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(endpoint, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        // Handle varying response shapes
+        const doc =
+          res.data.supplier ||
+          res.data.product ||
+          res.data.transaction ||
+          res.data.data ||
+          res.data;
+        setCurrentDocData(doc);
+      } catch (e) {
+        console.warn("Could not fetch current document for diff", e);
+      } finally {
+        setLoadingCurrentDoc(false);
+      }
     }
   };
 
@@ -244,11 +282,7 @@ const AdminDashboard = () => {
       render: (req) => (
         <button
           className="btn btn-primary btn-sm"
-          onClick={() => {
-            setSelectedRequest(req);
-            setApprovalRemarks("");
-            setShowApprovalModal(true);
-          }}
+          onClick={() => openApprovalModal(req)}
         >
           Review
         </button>
@@ -482,143 +516,336 @@ const AdminDashboard = () => {
       </DashboardSection>
 
       {/* Approval Details Modal */}
-      {selectedRequest && (
-        <Modal
-          isOpen={showApprovalModal}
-          onClose={() => setShowApprovalModal(false)}
-          title="Review Edit Request"
-          size="lg"
-        >
-          <div className="request-details">
-            <div className="grid-2col mb-4">
-              <div>
-                <strong>Module:</strong> {selectedRequest.module}
-              </div>
-              <div>
-                <strong>Action:</strong> {selectedRequest.action}
-              </div>
-              <div>
-                <strong>Requested By:</strong>{" "}
-                {selectedRequest.requestedBy?.name} (
-                {selectedRequest.requestedBy?.role})
-              </div>
-              <div>
-                <strong>Record ID:</strong> {selectedRequest.documentId}
-              </div>
-            </div>
+      {selectedRequest &&
+        (() => {
+          // Fields that are system-managed and should never be shown in a diff
+          const SKIP_FIELDS = new Set([
+            "_id",
+            "__v",
+            "createdAt",
+            "updatedAt",
+            "isActive",
+            "isVerified",
+            "totalOrders",
+            "totalValue",
+            "totalPaid",
+            "outstandingBalance",
+            "rating",
+            "hasDebt",
+            "paymentHistory",
+            "totalPaidToUs",
+            "totalPaymentsReceived",
+            // FinancialTransaction system fields
+            "processedBy",
+            "isArchived",
+            "date",
+            "relatedId",
+          ]);
 
-            <div className="details-section mb-4">
-              <h4
-                style={{
-                  marginBottom: "1rem",
-                  color: "var(--text-color)",
-                  fontWeight: "600",
-                }}
-              >
-                Requested Changes:
-              </h4>
-              <div
-                style={{
-                  background: "white",
-                  borderRadius: "8px",
-                  border: "1px solid var(--border-color)",
-                  overflow: "hidden",
-                }}
-              >
-                <table
+          // Humanise a camelCase key, e.g. "bankDetails" → "Bank Details"
+          const labelOf = (key) =>
+            key
+              .replace(/([A-Z])/g, " $1")
+              .trim()
+              .replace(/^./, (s) => s.toUpperCase());
+
+          // Render a single value (object → readable lines, bool → Yes/No, empty → —)
+          const renderVal = (val) => {
+            if (val === null || val === undefined || val === "")
+              return <em style={{ color: "#9ca3af" }}>—</em>;
+            if (typeof val === "boolean") return val ? "Yes" : "No";
+            if (typeof val === "object") {
+              const entries = Object.entries(val).filter(
+                ([, v]) => v !== "" && v !== null && v !== undefined,
+              );
+              if (entries.length === 0)
+                return <em style={{ color: "#9ca3af" }}>—</em>;
+              return (
+                <div
                   style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    textAlign: "left",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "2px",
                   }}
                 >
-                  <tbody>
-                    {Object.entries(selectedRequest.targetData || {}).map(
-                      ([key, value]) => (
-                        <tr
-                          key={key}
+                  {entries.map(([k, v]) => (
+                    <span key={k}>
+                      <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>
+                        {labelOf(k)}:{" "}
+                      </span>
+                      {String(v)}
+                    </span>
+                  ))}
+                </div>
+              );
+            }
+            return String(val);
+          };
+
+          // Build list of changed fields only
+          const proposed = selectedRequest.targetData || {};
+          const current = currentDocData || {};
+          const changedFields = Object.entries(proposed).filter(
+            ([key, newVal]) => {
+              if (SKIP_FIELDS.has(key)) return false;
+              const oldVal = current[key];
+              return JSON.stringify(newVal) !== JSON.stringify(oldVal);
+            },
+          );
+
+          return (
+            <Modal
+              isOpen={showApprovalModal}
+              onClose={() => setShowApprovalModal(false)}
+              title="Review Edit Request"
+              size="lg"
+            >
+              <div className="request-details">
+                {/* Request metadata */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "0.5rem 2rem",
+                    background: "#f9fafb",
+                    border: "1px solid var(--border-color)",
+                    borderRadius: "8px",
+                    padding: "1rem 1.25rem",
+                    marginBottom: "1.5rem",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  <div>
+                    <span style={{ color: "#6b7280" }}>Module:</span>{" "}
+                    <strong>{selectedRequest.module}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: "#6b7280" }}>Action:</span>{" "}
+                    <strong>{selectedRequest.action}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: "#6b7280" }}>Requested By:</span>{" "}
+                    <strong>{selectedRequest.requestedBy?.name}</strong>{" "}
+                    <span style={{ color: "#6b7280" }}>
+                      ({selectedRequest.requestedBy?.role?.replace(/_/g, " ")})
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: "#6b7280" }}>Date:</span>{" "}
+                    <strong>
+                      {new Date(selectedRequest.createdAt).toLocaleString()}
+                    </strong>
+                  </div>
+                </div>
+
+                {/* Changes diff table */}
+                <h4
+                  style={{
+                    marginBottom: "0.75rem",
+                    color: "var(--text-color)",
+                    fontWeight: "600",
+                  }}
+                >
+                  {loadingCurrentDoc
+                    ? "Loading comparison..."
+                    : changedFields.length === 0
+                      ? currentDocData
+                        ? "No fields were changed."
+                        : "Requested Changes:"
+                      : `${changedFields.length} field${changedFields.length > 1 ? "s" : ""} changed:`}
+                </h4>
+
+                <div
+                  style={{
+                    borderRadius: "8px",
+                    border: "1px solid var(--border-color)",
+                    overflow: "hidden",
+                    marginBottom: "1.5rem",
+                  }}
+                >
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      textAlign: "left",
+                    }}
+                  >
+                    <thead>
+                      <tr style={{ background: "#f3f4f6" }}>
+                        <th
                           style={{
+                            padding: "0.65rem 1rem",
+                            fontWeight: "600",
+                            fontSize: "0.82rem",
+                            color: "#374151",
+                            width: "25%",
                             borderBottom: "1px solid var(--border-color)",
                           }}
                         >
-                          <td
+                          FIELD
+                        </th>
+                        {currentDocData && (
+                          <th
                             style={{
-                              padding: "1rem 1.25rem",
+                              padding: "0.65rem 1rem",
                               fontWeight: "600",
-                              width: "35%",
-                              borderRight: "1px solid var(--border-color)",
-                              color: "#6b7280",
-                              fontSize: "0.95rem",
+                              fontSize: "0.82rem",
+                              color: "#374151",
+                              width: "37.5%",
+                              borderBottom: "1px solid var(--border-color)",
+                              borderLeft: "1px solid var(--border-color)",
                             }}
                           >
-                            {key
-                              .replace(/([A-Z])/g, " $1")
-                              .trim()
-                              .replace(/^./, (str) => str.toUpperCase())}
-                          </td>
-                          <td
+                            CURRENT VALUE
+                          </th>
+                        )}
+                        <th
+                          style={{
+                            padding: "0.65rem 1rem",
+                            fontWeight: "600",
+                            fontSize: "0.82rem",
+                            color: "#374151",
+                            borderBottom: "1px solid var(--border-color)",
+                            borderLeft: "1px solid var(--border-color)",
+                          }}
+                        >
+                          NEW VALUE
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(changedFields.length > 0
+                        ? changedFields
+                        : Object.entries(proposed).filter(
+                            ([k]) => !SKIP_FIELDS.has(k),
+                          )
+                      ).map(([key, newVal], idx) => {
+                        const oldVal = current[key];
+                        const isChanged =
+                          currentDocData &&
+                          JSON.stringify(newVal) !== JSON.stringify(oldVal);
+                        return (
+                          <tr
+                            key={key}
                             style={{
-                              padding: "1rem 1.25rem",
-                              fontWeight: "500",
-                              color: "#111827",
-                              fontSize: "0.95rem",
+                              borderBottom: "1px solid var(--border-color)",
+                              background: isChanged ? "#fffbeb" : "white",
                             }}
                           >
-                            {typeof value === "object"
-                              ? JSON.stringify(value)
-                              : String(value)}
-                          </td>
-                        </tr>
-                      ),
-                    )}
-                  </tbody>
-                </table>
+                            <td
+                              style={{
+                                padding: "0.85rem 1rem",
+                                fontWeight: "600",
+                                color: "#374151",
+                                fontSize: "0.88rem",
+                                verticalAlign: "top",
+                              }}
+                            >
+                              {labelOf(key)}
+                              {isChanged && (
+                                <span
+                                  style={{
+                                    display: "block",
+                                    fontSize: "0.7rem",
+                                    color: "#d97706",
+                                    fontWeight: "500",
+                                    marginTop: "2px",
+                                  }}
+                                >
+                                  CHANGED
+                                </span>
+                              )}
+                            </td>
+                            {currentDocData && (
+                              <td
+                                style={{
+                                  padding: "0.85rem 1rem",
+                                  color: "#6b7280",
+                                  fontSize: "0.88rem",
+                                  borderLeft: "1px solid var(--border-color)",
+                                  verticalAlign: "top",
+                                  textDecoration: isChanged
+                                    ? "line-through"
+                                    : "none",
+                                }}
+                              >
+                                {renderVal(oldVal)}
+                              </td>
+                            )}
+                            <td
+                              style={{
+                                padding: "0.85rem 1rem",
+                                fontWeight: "500",
+                                color: isChanged ? "#065f46" : "#111827",
+                                fontSize: "0.88rem",
+                                borderLeft: "1px solid var(--border-color)",
+                                background: isChanged
+                                  ? "#ecfdf5"
+                                  : "transparent",
+                                verticalAlign: "top",
+                              }}
+                            >
+                              {renderVal(newVal)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="form-group mb-4">
+                  <label>Admin Remarks (Optional)</label>
+                  <textarea
+                    className="form-control"
+                    value={approvalRemarks}
+                    onChange={(e) => setApprovalRemarks(e.target.value)}
+                    placeholder="Enter any notes about this approval or rejection..."
+                    rows="3"
+                  />
+                </div>
+
+                <div
+                  className="modal-actions"
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    justifyContent: "flex-end",
+                  }}
+                >
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => setShowApprovalModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "5px",
+                    }}
+                    onClick={() => handleReviewRequest("Rejected")}
+                  >
+                    <XCircle size={16} /> Reject
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "5px",
+                    }}
+                    onClick={() => handleReviewRequest("Approved")}
+                  >
+                    <CheckCircle size={16} /> Approve Changes
+                  </button>
+                </div>
               </div>
-            </div>
-
-            <div className="form-group mb-4">
-              <label>Admin Remarks (Optional)</label>
-              <textarea
-                className="form-control"
-                value={approvalRemarks}
-                onChange={(e) => setApprovalRemarks(e.target.value)}
-                placeholder="Enter any notes about this approval or rejection..."
-                rows="3"
-              />
-            </div>
-
-            <div
-              className="modal-actions"
-              style={{
-                display: "flex",
-                gap: "10px",
-                justifyContent: "flex-end",
-              }}
-            >
-              <button
-                className="btn btn-outline"
-                onClick={() => setShowApprovalModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-danger"
-                style={{ display: "flex", alignItems: "center", gap: "5px" }}
-                onClick={() => handleReviewRequest("Rejected")}
-              >
-                <XCircle size={16} /> Reject
-              </button>
-              <button
-                className="btn btn-primary"
-                style={{ display: "flex", alignItems: "center", gap: "5px" }}
-                onClick={() => handleReviewRequest("Approved")}
-              >
-                <CheckCircle size={16} /> Approve Changes
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
+            </Modal>
+          );
+        })()}
     </div>
   );
 };

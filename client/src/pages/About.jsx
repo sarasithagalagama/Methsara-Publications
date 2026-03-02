@@ -35,7 +35,7 @@ const About = () => {
 
   return (
     <div className="about-modern-page">
-      {/* â”€â”€ HERO SECTION â”€â”€ */}
+      {/* ── HERO SECTION ── */}
       <section className="about-modern-hero">
         <div className="about-hero-bg"></div>
         <div className="container about-hero-content">
@@ -52,7 +52,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* â”€â”€ METRICS OVERLAP â”€â”€ */}
+      {/* ── METRICS OVERLAP ── */}
       <section className="about-metrics container">
         <div className="metrics-modern-grid">
           <div className="metric-modern-card">
@@ -86,7 +86,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* â”€â”€ STORY SECTION (SPLIT) â”€â”€ */}
+      {/* ── STORY SECTION (SPLIT) ── */}
       <section
         id="story"
         className={`section-modern story-modern bg-light animate-on-scroll ${isVisible["story"] ? "is-visible" : ""}`}
@@ -118,7 +118,7 @@ const About = () => {
               <div className="founder-quote">
                 "We don't just print books; we engineer pathways to university
                 and beyond."
-                <span className="founder-name">â€” The Methsara Team</span>
+                <span className="founder-name">— The Methsara Team</span>
               </div>
             </div>
 
@@ -141,7 +141,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* â”€â”€ CORE VALUES â”€â”€ */}
+      {/* ── CORE VALUES ── */}
       <section
         id="values"
         className={`section-modern animate-on-scroll ${isVisible["values"] ? "is-visible" : ""}`}
@@ -194,7 +194,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* â”€â”€ CALL TO ACTION â”€â”€ */}
+      {/* ── CALL TO ACTION ── */}
       <section className="about-modern-cta">
         <div className="container">
           <div className="cta-modern-box">

@@ -46,17 +46,6 @@ const DashboardLayout = () => {
           <button className="menu-toggle" onClick={toggleSidebar}>
             ☰
           </button>
-
-          {/* We might not need DashboardHeader here if individual pages use it, 
-              OR we can move DashboardHeader here for global consistency. 
-              Let's keep it flexible for now, maybe just render Outlet. 
-              But the plan said "Includes Sidebar and DashboardHeader".
-              If we put DashboardHeader here, we need to pass props like title/subtitle which vary by page.
-              Better approach: Let pages render their specific header content, 
-              OR use a context to set the header. 
-              For now, let's keep the layout simple: Sidebar + Main Content Area. 
-              The pages can render DashboardHeader inside Outlet.
-          */}
         </header>
 
         <main className="page-content">

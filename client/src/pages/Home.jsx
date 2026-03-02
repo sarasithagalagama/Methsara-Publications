@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import "./Home.css";
 
-// â”€â”€â”€ DUMMY DATA FOR NEW DESIGN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ──────────────── DUMMY DATA FOR NEW DESIGN ──────────────────────────────────
 const TESTIMONIALS = [
   {
     name: "Nimesha Rathnayake",
@@ -157,7 +157,7 @@ const Home = () => {
 
   return (
     <main className="home-modern" role="main">
-      {/* â”€â”€ HERO SECTION â”€â”€ */}
+      {/* ── HERO SECTION ── */}
       <section className="hero-modern">
         <div className="hero-modern-overlay"></div>
 
@@ -194,7 +194,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* â”€â”€ CATEGORIES EXPANDED â”€â”€ */}
+      {/* ── CATEGORIES EXPANDED ── */}
       <section className="section-modern bg-light">
         <div className="container">
           <div className="section-modern-header">
@@ -237,7 +237,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* â”€â”€ TRENDING / BEST SELLERS (Horizontal Scrollable or Grid) â”€â”€ */}
+      {/* ── TRENDING / BEST SELLERS ── */}
       <section className="section-modern">
         <div className="container">
           <div className="section-modern-header flex-between">
@@ -327,7 +327,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* â”€â”€ IMMERSIVE PROMO SECTION â”€â”€ */}
+      {/* ── IMMERSIVE PROMO SECTION ── */}
       <section className="section-modern promo-immersive">
         <div className="promo-modern-bg"></div>
         <div className="container">
@@ -362,7 +362,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* â”€â”€ TESTIMONIALS (Masonry style or elegant layout) â”€â”€ */}
+      {/* ── TESTIMONIALS ── */}
       <section className="section-modern bg-light">
         <div className="container">
           <div className="section-modern-header centered animate-fade-in-up">

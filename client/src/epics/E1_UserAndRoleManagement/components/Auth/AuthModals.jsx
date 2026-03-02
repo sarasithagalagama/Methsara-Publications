@@ -125,23 +125,15 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
                   type={showPassword ? "text" : "password"}
                   name="password"
                   className="form-input"
-                  placeholder="��������"
+                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
                   required
                 />
                 <button
                   type="button"
-                  className="password-toggle"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: "absolute",
-                    right: "15px",
-                    background: "none",
-                    border: "none",
-                    color: "#94a3b8",
-                    cursor: "pointer",
-                  }}
+                  className="auth-toggle-btn"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -185,6 +177,8 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -310,12 +304,14 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
           <form onSubmit={handleSubmit} className="auth-form">
             <div className="form-group">
               <label className="form-label">Full Name</label>
-              <div className="input-wrapper">
+              <div
+                className={`input-wrapper ${errors.name ? "input-error-wrapper" : ""}`}
+              >
                 <User className="input-icon" size={18} />
                 <input
                   type="text"
                   name="name"
-                  className={`form-input ${errors.name ? "input-error" : ""}`}
+                  className="form-input"
                   placeholder="John Doe"
                   value={formData.name}
                   onChange={handleChange}
@@ -336,12 +332,14 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
             >
               <div className="form-group">
                 <label className="form-label">Email</label>
-                <div className="input-wrapper">
+                <div
+                  className={`input-wrapper ${errors.email ? "input-error-wrapper" : ""}`}
+                >
                   <Mail className="input-icon" size={18} />
                   <input
                     type="email"
                     name="email"
-                    className={`form-input ${errors.email ? "input-error" : ""}`}
+                    className="form-input"
                     placeholder="name@email.com"
                     value={formData.email}
                     onChange={handleChange}
@@ -354,12 +352,14 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
               </div>
               <div className="form-group">
                 <label className="form-label">Phone</label>
-                <div className="input-wrapper">
+                <div
+                  className={`input-wrapper ${errors.phone ? "input-error-wrapper" : ""}`}
+                >
                   <Phone className="input-icon" size={18} />
                   <input
                     type="tel"
                     name="phone"
-                    className={`form-input ${errors.phone ? "input-error" : ""}`}
+                    className="form-input"
                     placeholder="07XXXXXXXX"
                     value={formData.phone}
                     onChange={handleChange}
@@ -381,17 +381,26 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
             >
               <div className="form-group">
                 <label className="form-label">Password</label>
-                <div className="input-wrapper">
+                <div
+                  className={`input-wrapper ${errors.password ? "input-error-wrapper" : ""}`}
+                >
                   <Lock className="input-icon" size={18} />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     name="password"
-                    className={`form-input ${errors.password ? "input-error" : ""}`}
-                    placeholder="��������"
+                    className="form-input"
+                    placeholder="Min. 8 characters"
                     value={formData.password}
                     onChange={handleChange}
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="auth-toggle-btn"
+                  >
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
                 </div>
                 {errors.password && (
                   <span className="form-error-msg">{errors.password}</span>
@@ -399,17 +408,30 @@ export const RegisterModal = ({ isOpen, onClose, onSwitchToLogin }) => {
               </div>
               <div className="form-group">
                 <label className="form-label">Confirm</label>
-                <div className="input-wrapper">
+                <div
+                  className={`input-wrapper ${errors.confirmPassword ? "input-error-wrapper" : ""}`}
+                >
                   <Lock className="input-icon" size={18} />
                   <input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
-                    className={`form-input ${errors.confirmPassword ? "input-error" : ""}`}
-                    placeholder="��������"
+                    className="form-input"
+                    placeholder="Repeat password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="auth-toggle-btn"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={15} />
+                    ) : (
+                      <Eye size={15} />
+                    )}
+                  </button>
                 </div>
                 {errors.confirmPassword && (
                   <span className="form-error-msg">

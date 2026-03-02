@@ -20,6 +20,7 @@ const Contact = () => {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,9 +29,10 @@ const Contact = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitSuccess(false);
     // Simulate API call
     setTimeout(() => {
-      alert("Message Sent Successfully! We'll be in touch soon.");
+      setSubmitSuccess(true);
       setFormData({ name: "", email: "", subject: "", message: "" });
       setIsSubmitting(false);
     }, 1500);
@@ -215,6 +217,23 @@ const Contact = () => {
                   )}
                 </button>
               </form>
+
+              {submitSuccess && (
+                <div
+                  style={{
+                    marginTop: "1rem",
+                    padding: "1rem 1.5rem",
+                    background: "#d4edda",
+                    border: "1px solid #c3e6cb",
+                    borderRadius: "10px",
+                    color: "#155724",
+                    fontWeight: 500,
+                  }}
+                >
+                  ✓ Message sent successfully! We'll be in touch within 24
+                  hours.
+                </div>
+              )}
             </div>
           </div>
         </div>
