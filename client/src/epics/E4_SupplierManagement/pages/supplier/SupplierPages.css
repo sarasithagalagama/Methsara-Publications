@@ -1,0 +1,18 @@
+/* Supplier Pages Shared CSS - standardizing with global variables */
+
+/* Shared utilities for procurement forms if not in dashboard.css */
+.form-card {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Specific overrides for procurement list badges if needed */
+.status-badge.received {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.cancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
