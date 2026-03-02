@@ -11,7 +11,14 @@ const financialTransactionSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["Salary", "Supplier Payment", "Refund", "Bonus", "Other"],
+      enum: [
+        "Salary",
+        "Supplier Payment",
+        "Refund",
+        "Bonus",
+        "Customer Collection",
+        "Other",
+      ],
       required: true,
     },
     amount: {
@@ -40,6 +47,11 @@ const financialTransactionSchema = new mongoose.Schema(
       required: true,
     },
     isIncome: {
+      type: Boolean,
+      default: false,
+    },
+    // Soft-delete: archived transactions are hidden from views but never removed from DB
+    isArchived: {
       type: Boolean,
       default: false,
     },

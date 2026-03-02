@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Invoice
 // Epic: E3 - Order & Transaction
 // Owner: IT24100191 (Jayasinghe D.B.P)
@@ -8,6 +8,7 @@ import React, { useRef } from "react";
 import { X, Printer } from "lucide-react";
 import "./Invoice.css";
 
+// [E3.10] Invoice component: uses window.print() — 'no-print' CSS class hides action buttons during printing
 const Invoice = ({ order, onClose }) => {
   const invoiceRef = useRef();
 
@@ -17,9 +18,7 @@ const Invoice = ({ order, onClose }) => {
 
   if (!order) return null;
 
-  // ─────────────────────────────────
   // Render
-  // ─────────────────────────────────
   return (
     <div className="invoice-overlay">
       <div className="invoice-container">
@@ -103,11 +102,15 @@ const Invoice = ({ order, onClose }) => {
                   <td>
                     <div className="item-desc">
                       <span className="item-title">
-                        {item.productTitle || item.product?.title}
+                        {item.productTitle ||
+                          item.product?.title ||
+                          item.product?.name}
                       </span>
-                      <span className="item-isbn">
-                        ISBN: {item.productISBN || item.product?.isbn}
-                      </span>
+                      {(item.productISBN || item.product?.isbn) && (
+                        <span className="item-isbn">
+                          ISBN: {item.productISBN || item.product?.isbn}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td>{item.quantity}</td>

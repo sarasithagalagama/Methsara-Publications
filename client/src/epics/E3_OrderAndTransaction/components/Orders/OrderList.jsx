@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Order List Component
 // Epic: E3 - Order & Transaction
 // Owner: IT24100191 (Jayasinghe D.B.P)
@@ -10,23 +10,18 @@ import orderService from "../../services/orderService";
 import "./Orders.css";
 
 function OrderList() {
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // ─────────────────────────────────
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     loadOrders();
   }, []);
 
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
+  // [E3.6] Fetch customer order list — used in the early component version; pages/OrderHistory.jsx is the production view
   const loadOrders = async () => {
     try {
       setLoading(true);
@@ -39,7 +34,7 @@ function OrderList() {
     }
   };
 
-  // Status badge color
+  // [E3.7] Status badge colours map the lifecycle for the customer at a glance
   const getStatusBadge = (status) => {
     const statusClasses = {
       Pending: "badge-warning",
@@ -52,9 +47,7 @@ function OrderList() {
   };
 
   if (loading)
-    // ─────────────────────────────────
     // Render
-    // ─────────────────────────────────
     return (
       <div className="loading">
         <div className="spinner"></div>

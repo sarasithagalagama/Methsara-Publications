@@ -1,9 +1,8 @@
-﻿// ============================================
-// [Epic E3] Order and Transaction
-// --------------------------------------------
-// This is the final and most critical step of the customer journey.
-// It handles everything from shipping details to payment verification.
-// Owner: IT24100548 (Galagama S.T)
+// ============================================
+// Checkout Page
+// Epic: E3 - Order & Transaction
+// Owner: IT24100191 (Jayasinghe D.B.P)
+// Purpose: Final checkout step - shipping, payment, verification
 // ============================================
 
 import React, { useState, useEffect } from "react";
@@ -22,18 +21,18 @@ import StatusModal from "../../../components/common/StatusModal";
 import "./Checkout.css";
 
 const CHECKOUT_STEPS = ["Browse", "Cart", "Checkout", "Success"];
+// [E3.3] [E3.4] Final checkout step — handles COD, Bank Transfer, coupon/voucher application
 
 const Checkout = () => {
   const navigate = useNavigate();
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discount, setDiscount] = useState(0);
 
+  // [E6.4] Gift Voucher State — vouchers apply as a separate discount on top of coupons
   // Epic E6.4 Gift Voucher State
   const [voucherCode, setVoucherCode] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState(null);
@@ -63,26 +62,19 @@ const Checkout = () => {
 
   const [isGuest, setIsGuest] = useState(false);
 
-  /**
-   * On mount, we identify if the user is a registered customer or a guest.
-   * This determines how we fetch their cart and validate their data.
-   */
-  // ─────────────────────────────────
+  // [E3.3] isGuest flag drives conditional rendering: guest must fill name/email, auth user sees pre-filled form
+  // On mount, we identify if the user is a registered customer or a guest.
+  // This determines how we fetch their cart and validate their data.
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     fetchCart();
     setIsGuest(!localStorage.getItem("token"));
   }, []);
 
-  /**
-   * [Epic E3.1] - Synchronizing the Cart
-   * We pull the latest items to ensure the user is paying the correct amount
-   * and that items are still in stock.
-   */
-  // ─────────────────────────────────
+  // [Epic E3.1] - Synchronizing the Cart
+  // We pull the latest items to ensure the user is paying the correct amount
+  // and that items are still in stock.
   // Event Handlers
-  // ─────────────────────────────────
   const fetchCart = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -111,11 +103,9 @@ const Checkout = () => {
     }
   };
 
-  /**
-   * [Epic E3.4] - Coupon Validation
-   * Users can apply promo codes to get discounts.
-   * We validate these codes on the server to prevent fraud.
-   */
+  // [Epic E3.4] - Coupon Validation
+  // Users can apply promo codes to get discounts.
+  // We validate these codes on the server to prevent fraud.
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
     try {
@@ -137,9 +127,7 @@ const Checkout = () => {
     }
   };
 
-  /**
-   * [Epic E6.4] - Gift Voucher Validation
-   */
+  // [Epic E6.4] - Gift Voucher Validation
   const handleApplyVoucher = async () => {
     if (!voucherCode) return;
     try {
@@ -157,10 +145,8 @@ const Checkout = () => {
     }
   };
 
-  /**
-   * For Bank Transfers, we allow users to upload a high-res image
-   * of their deposit slip as proof of payment.
-   */
+  // For Bank Transfers, we allow users to upload a high-res image
+  // of their deposit slip as proof of payment.
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -172,10 +158,8 @@ const Checkout = () => {
     }
   };
 
-  /**
-   * Deep validation to ensure we have a valid shipping address
-   * and phone number before accepting the order.
-   */
+  // Deep validation to ensure we have a valid shipping address
+  // and phone number before accepting the order.
   const validateForm = () => {
     const errors = {};
     const phoneRegex = /^0\d{9}$/;
@@ -213,11 +197,9 @@ const Checkout = () => {
     return Object.keys(errors).length === 0;
   };
 
-  /**
-   * [Epic E3.2] - Placing the Order
-   * This is where the magic happens. We package up all cart items,
-   * shipping info, and payment details into a single transaction.
-   */
+  // [Epic E3.2] - Placing the Order
+  // This is where the magic happens. We package up all cart items,
+  // shipping info, and payment details into a single transaction.
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
@@ -230,6 +212,7 @@ const Checkout = () => {
       const orderData = {
         items: cart.items.map((item) => ({
           product: item.product._id,
+          itemModel: item.itemModel || "Product",
           quantity: item.quantity,
           price: item.price,
         })),
@@ -238,6 +221,7 @@ const Checkout = () => {
         bankSlipUrl: formData.bankSlip,
         couponCode: appliedCoupon?.code,
         giftVoucherCode: appliedVoucher?.code,
+        taxRate, // [E3.9] pass VAT rate so backend stores it on the order
       };
 
       if (isGuest) {
@@ -267,9 +251,7 @@ const Checkout = () => {
   };
 
   if (loading)
-    // ─────────────────────────────────
     // Render
-    // ─────────────────────────────────
     return (
       <div className="loading-modern">
         <div className="spinner-modern"></div>
@@ -278,17 +260,30 @@ const Checkout = () => {
 
   const deliveryFee = 350;
   const subtotal = cart?.totalAmount || 0;
-  const totalBeforeVoucher = subtotal - discount + deliveryFee;
 
+  // [E3.9] Tax from Finance Manager's Tax Configuration (JSON stored in localStorage)
+  const taxConfig = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("taxConfig") || "{}");
+    } catch {
+      return {};
+    }
+  })();
+  const taxRate = taxConfig.applyToInvoices
+    ? Math.max(0, parseFloat(taxConfig.vatRate || "0"))
+    : 0;
+  const taxAmount = Math.round((subtotal * taxRate) / 100);
+  const taxName = taxConfig.taxName || "VAT";
+
+  const totalBeforeVoucher = subtotal + taxAmount - discount + deliveryFee;
   const calculatedVoucherDiscount = appliedVoucher
     ? Math.min(appliedVoucher.balance, totalBeforeVoucher)
     : 0;
-
   const total = totalBeforeVoucher - calculatedVoucherDiscount;
 
   return (
     <div className="checkout-modern-page">
-      {/* â”€â”€ Progress Bar â”€â”€ */}
+      {/* ── Progress Bar ── */}
       <div className="checkout-progress-modern">
         <div className="container">
           <div className="progress-steps-modern">
@@ -599,7 +594,7 @@ const Checkout = () => {
                       )}
                       {formData.bankSlip && (
                         <p className="file-success-modern">
-                          âœ“ Document attached successfully
+                          ✓ Document attached successfully
                         </p>
                       )}
                     </div>
@@ -615,6 +610,23 @@ const Checkout = () => {
                   to privacy standards.
                 </p>
               </div>
+
+              {/* This block is assumed to be part of the handlePlaceOrder function or similar logic */}
+              {/* For the purpose of this edit, it's placed here as per the instruction's context. */}
+              {/* In a real React component, this would be inside a function like handleSubmit. */}
+              {/* const orderData = {
+                items: cart.items.map((item) => ({
+                  product: item.product._id,
+                  itemModel: item.itemModel || "Product",
+                  quantity: item.quantity,
+                  price: item.price,
+                })),
+                deliveryAddress: formData.deliveryAddress,
+                paymentMethod: formData.paymentMethod,
+                bankSlipUrl: formData.bankSlip,
+                couponCode: appliedCoupon?.code,
+                giftVoucherCode: appliedVoucher?.code,
+              }; */}
 
               <button
                 type="submit"
@@ -633,8 +645,8 @@ const Checkout = () => {
               {cart?.items.map((item) => (
                 <div key={item._id} className="summary-item-row-modern">
                   <div className="summary-item-title-modern">
-                    {item.product?.title}{" "}
-                    <span className="qty-muted">Ã— {item.quantity}</span>
+                    {item.product?.title || item.product?.name}{" "}
+                    <span className="qty-muted">× {item.quantity}</span>
                   </div>
                   <div className="summary-item-price-modern">
                     Rs. {(item.price * item.quantity).toLocaleString()}
@@ -708,6 +720,14 @@ const Checkout = () => {
                 <span>Shipping Fee</span>
                 <span>Rs. {deliveryFee.toLocaleString()}</span>
               </div>
+              {taxAmount > 0 && (
+                <div className="totals-row-modern">
+                  <span>
+                    {taxName} ({taxRate}%)
+                  </span>
+                  <span>Rs. {taxAmount.toLocaleString()}</span>
+                </div>
+              )}
               {discount > 0 && (
                 <div className="totals-row-modern discount-row-modern">
                   <span>Loyalty Promo</span>

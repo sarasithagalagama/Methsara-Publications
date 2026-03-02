@@ -10,11 +10,12 @@ const Product = require("../../E2_ProductCatalog/models/Product");
 const Inventory = require("../../E5_InventoryManagement/models/Inventory");
 const Coupon = require("../../E6_PromotionAndLoyalty/models/Coupon");
 const GiftVoucher = require("../../E6_PromotionAndLoyalty/models/GiftVoucher");
+const VoucherProduct = require("../../E6_PromotionAndLoyalty/models/VoucherProduct");
 const Campaign = require("../../E6_PromotionAndLoyalty/models/Campaign");
 const Location = require("../../E5_InventoryManagement/models/Location");
 const Review = require("../../E2_ProductCatalog/models/Review");
 
-// Create Order / Checkout (E3.3, E3.4)
+// [E3.3][E3.4] createOrder: cross-epic checkout handler (imports E2 Product, E5 Inventory, E6 Coupon/GiftVoucher/Campaign)
 exports.createOrder = async (req, res) => {
   try {
     const {
@@ -25,9 +26,12 @@ exports.createOrder = async (req, res) => {
       couponCode,
       giftVoucherCode,
       fulfillmentLocation,
+      taxRate, // [E3.9] VAT/tax rate from Finance Manager's Tax Configuration (stored in client localStorage)
     } = req.body;
 
-    // 0. Resolve fulfillment location dynamically if not provided
+    const appliedTaxRate = Math.max(0, parseFloat(taxRate) || 0);
+
+    // [E5.7] Resolve fulfillment location — defaults to the branch flagged isMainWarehouse=true
     let finalLocation = fulfillmentLocation;
     if (!finalLocation) {
       const mainLoc = await Location.findOne({ isMainWarehouse: true });
@@ -39,16 +43,19 @@ exports.createOrder = async (req, res) => {
     const orderItems = [];
 
     for (const item of items) {
-      const product = await Product.findById(item.product);
+      const itemModel = item.itemModel || "Product";
+      const Model = itemModel === "VoucherProduct" ? VoucherProduct : Product;
+
+      const product = await Model.findById(item.product);
       if (!product) {
         return res.status(404).json({
           success: false,
-          message: `Product ${item.product} not found`,
+          message: `${itemModel === "Product" ? "Product" : "Voucher"} ${item.product} not found`,
         });
       }
 
-      // Check inventory (SKIP for Gift Vouchers)
-      if (product.category !== "Gift Voucher") {
+      // [E5.3] Inventory check: only for Products (books) — gift voucher products skip stock validation
+      if (itemModel === "Product") {
         const inventories = await Inventory.find({ product: item.product });
         let totalAvailable = 0;
 
@@ -67,23 +74,31 @@ exports.createOrder = async (req, res) => {
         }
       }
 
-      // Apply campaign discounts
-      const pricing = await Campaign.getDiscountedPrice(product);
+      // [E6.5] Apply best active campaign discount to each product at checkout time
+      let finalItemPrice = product.price;
+      let originalItemPrice = product.price;
+
+      if (itemModel === "Product") {
+        const pricing = await Campaign.getDiscountedPrice(product);
+        finalItemPrice = pricing.discountedPrice;
+        originalItemPrice = pricing.originalPrice;
+      }
 
       orderItems.push({
         product: product._id,
-        productTitle: product.title,
-        productISBN: product.isbn,
+        itemModel,
+        productTitle: product.title || product.name,
+        productISBN: product.isbn || "VOUCHER",
         quantity: item.quantity,
-        price: pricing.discountedPrice,
-        originalPrice: pricing.originalPrice,
-        subtotal: pricing.discountedPrice * item.quantity,
+        price: finalItemPrice,
+        originalPrice: originalItemPrice,
+        subtotal: finalItemPrice * item.quantity,
       });
 
-      subtotal += pricing.discountedPrice * item.quantity;
+      subtotal += finalItemPrice * item.quantity;
     }
 
-    // Apply coupon if provided
+    // [E6.3] Apply coupon discount: validateCoupon logic inline — calculates amount via coupon.calculateDiscount
     let couponDiscount = 0;
     if (couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
@@ -95,10 +110,10 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    // Calculate delivery fee
+    // [E3.4] Delivery fee: free shipping over LKR 2000; otherwise flat LKR 300
     const deliveryFee = subtotal > 2000 ? 0 : 300;
 
-    // Apply Gift Voucher if provided
+    // [E6.4] Apply gift voucher: deducts from balance, capped at remaining order amount
     let giftVoucherDiscount = 0;
     let appliedVoucherDoc = null;
     if (giftVoucherCode) {
@@ -147,7 +162,14 @@ exports.createOrder = async (req, res) => {
       giftVoucherCode: appliedVoucherDoc ? appliedVoucherDoc.code : undefined,
       giftVoucherDiscount,
       deliveryFee,
-      total: subtotal - couponDiscount - giftVoucherDiscount + deliveryFee,
+      taxRate: appliedTaxRate,
+      // taxAmount and total are recalculated by the pre-save hook
+      total:
+        subtotal +
+        Math.round((subtotal * appliedTaxRate) / 100) -
+        couponDiscount -
+        giftVoucherDiscount +
+        deliveryFee,
       deliveryAddress,
       paymentMethod,
       bankSlipUrl,
@@ -170,11 +192,9 @@ exports.createOrder = async (req, res) => {
       await appliedVoucherDoc.save();
     }
 
-    // Deduct inventory (E5.8) (SKIP for Gift Vouchers)
+    // Deduct inventory (ONLY for physical products)
     for (const item of orderItems) {
-      const product = await Product.findById(item.product);
-
-      if (product && product.category !== "Gift Voucher") {
+      if (item.itemModel === "Product") {
         let remainingToDeduct = item.quantity;
         const inventories = await Inventory.find({
           product: item.product,
@@ -192,12 +212,12 @@ exports.createOrder = async (req, res) => {
           await inventory.save();
           remainingToDeduct -= deductionAmount;
         }
-      }
 
-      // Increment purchase count
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: { purchaseCount: item.quantity },
-      });
+        // Increment purchase count
+        await Product.findByIdAndUpdate(item.product, {
+          $inc: { purchaseCount: item.quantity },
+        });
+      }
     }
 
     // Update coupon usage
@@ -331,18 +351,15 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     // AUTOMATION: Generate Gift Vouchers if order is confirmed (Processing/Shipped/Delivered)
-    // Only generate if not already generated
     const confirmationStatuses = ["Processing", "Shipped", "Delivered"];
     if (
       confirmationStatuses.includes(orderStatus) &&
       (!order.generatedVouchers || order.generatedVouchers.length === 0)
     ) {
-      const voucherItems = order.items;
       const createdVouchers = [];
 
-      for (const item of voucherItems) {
-        const product = await Product.findById(item.product);
-        if (product && product.category === "Gift Voucher") {
+      for (const item of order.items) {
+        if (item.itemModel === "VoucherProduct") {
           // Create vouchers for each quantity unit
           for (let i = 0; i < item.quantity; i++) {
             const voucher = await GiftVoucher.create({
@@ -484,6 +501,7 @@ exports.getDashboardStats = async (req, res) => {
     // 2. Sales Stats (Top Categories)
     const salesAggregation = await Order.aggregate([
       { $unwind: "$items" },
+      { $match: { "items.itemModel": "Product" } }, // Only lookup categories for Products
       {
         $lookup: {
           from: "products",

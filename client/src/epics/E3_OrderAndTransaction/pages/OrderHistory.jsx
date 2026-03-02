@@ -1,7 +1,8 @@
-﻿// ============================================
+// ============================================
 // OrderHistory Component
 // Epic: E3 - Order & Transaction
-// Purpose: Customer order history - UI
+// Owner: IT24100191 (Jayasinghe D.B.P)
+// Purpose: Customer order history - UI (E3.9)
 // ============================================
 
 import React, { useState, useEffect } from "react";
@@ -19,23 +20,18 @@ import "./OrderHistory.css";
 import Invoice from "../components/Order/Invoice";
 
 const OrderHistory = () => {
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // ─────────────────────────────────
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
+  // [E3.6] Fetches only the logged-in customer's orders via /my-orders — backend filters by JWT user ID
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -50,6 +46,7 @@ const OrderHistory = () => {
     }
   };
 
+  // [E3.7] Status badge colours map the order lifecycle: Pending→yellow, Processing→indigo, Shipped→purple, Delivered→green, Cancelled→red
   const getStatusStyle = (status) => {
     const styles = {
       Pending: { bg: "#fef3c7", color: "#d97706" },
@@ -62,9 +59,7 @@ const OrderHistory = () => {
   };
 
   if (loading) {
-    // ─────────────────────────────────
     // Render
-    // ─────────────────────────────────
     return (
       <div className="orders-loading-modern">
         <div className="spinner-modern"></div>
@@ -160,7 +155,7 @@ const OrderHistory = () => {
                         <div className="item-details-modern">
                           <h4>{item.productTitle || "Unknown Product"}</h4>
                           <p className="item-qty-price">
-                            Qty: {item.quantity} Ã— Rs.{" "}
+                            Qty: {item.quantity} &times; Rs.{" "}
                             {item.price.toLocaleString()}
                           </p>
                         </div>

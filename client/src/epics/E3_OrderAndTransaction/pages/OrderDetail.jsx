@@ -1,4 +1,11 @@
-﻿import React, { useState, useEffect } from "react";
+// ============================================
+// Order Detail Page
+// Epic: E3 - Order & Transaction
+// Owner: IT24100191 (Jayasinghe D.B.P)
+// Purpose: View detailed order info and status (E3.10)
+// ============================================
+
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import {
@@ -19,9 +26,7 @@ import "./OrderDetail.css";
 
 const OrderDetail = () => {
   const { id } = useParams();
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,16 +37,12 @@ const OrderDetail = () => {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
   const [hoveredRating, setHoveredRating] = useState(0);
 
-  // ─────────────────────────────────
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     fetchOrderDetails();
   }, [id]);
 
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
   const fetchOrderDetails = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -67,6 +68,7 @@ const OrderDetail = () => {
     setSelectedProductForReview(null);
   };
 
+  // [E2.8] Review submitted here after delivery — integrates E2 review feature from within the order flow
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     try {
@@ -92,9 +94,7 @@ const OrderDetail = () => {
   };
 
   if (loading)
-    // ─────────────────────────────────
     // Render
-    // ─────────────────────────────────
     return (
       <div className="loading">
         <div className="spinner"></div>
@@ -114,6 +114,7 @@ const OrderDetail = () => {
       </div>
     );
 
+  // [E3.7] Order tracking: step progress bar below uses steps array index to highlight current status
   const steps = ["Pending", "Processing", "Shipped", "Delivered"];
   const currentStatusIndex = steps.indexOf(order.orderStatus);
 
