@@ -1,0 +1,141 @@
+/* Standardized with dashboard.css variables */
+/* Cards */
+.card.supplier-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card.supplier-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-header h3 {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin: 0;
+  font-family: var(--font-heading);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge.material-supplier {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.badge.distributor {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.badge.bookshop {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.legal-info {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.print-only {
+  display: none;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .no-print,
+  .sidebar,
+  .dashboard-header,
+  .tabs,
+  .page-header h1,
+  .page-header p,
+  .header-actions,
+  .card-actions {
+    display: none !important;
+  }
+
+  .dashboard-container {
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .supplier-list-container {
+    padding: 0;
+  }
+
+  .print-only {
+    display: block;
+    margin-bottom: 2rem;
+    font-size: 1.5rem;
+    text-align: center;
+    border-bottom: 2px solid #000;
+    padding-bottom: 1rem;
+  }
+
+  .grid {
+    display: block;
+  }
+
+  .card.supplier-card {
+    break-inside: avoid;
+    border: 1px solid #ddd;
+    box-shadow: none;
+    margin-bottom: 1.5rem;
+    page-break-inside: avoid;
+  }
+
+  .badge {
+    border: 1px solid #000;
+    background: none !important;
+    color: black !important;
+  }
+}
