@@ -22,9 +22,7 @@ npm -v
 
 Both commands should print a version number (e.g. `v20.x.x` and `10.x.x`).
 
-### 2. Install Git (optional, for cloning)
-
-If you need to clone the repository:
+### 2. Install Git
 
 1. Go to [https://git-scm.com](https://git-scm.com) and download the installer
 2. Run the installer with default settings
@@ -45,31 +43,21 @@ git clone https://github.com/sarasithagalagama/Methsara-Publications.git
 cd Methsara-Publications
 ```
 
-### 2. Set up environment variables
-
-Create a `.env` file in the root directory with the following values:
-
-```env
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-```
-
-### 3. Install root dependencies
-
-From the root of the project:
+### 2. Install root dependencies
 
 ```bash
 npm install
 ```
 
-### 4. Install client dependencies
+### 3. Install client dependencies
 
 ```bash
 cd client
 npm install
 cd ..
 ```
+
+> **Note:** The `.env` file and product image uploads are already included in the repository — no extra configuration needed.
 
 ---
 
@@ -82,7 +70,7 @@ npm start
 ```
 
 This uses `concurrently` to start:
-- **Backend** (Express) on `http://localhost:5000`
+- **Backend** (Express) on `http://localhost:5001`
 - **Frontend** (React) on `http://localhost:3000`
 
 The React app will open automatically in your browser.
@@ -120,9 +108,21 @@ cd client
 npm install
 ```
 
-### MongoDB connection error
+### Port already in use (EADDRINUSE)
 
-Make sure your `MONGO_URI` in `.env` is correct and your MongoDB instance (local or Atlas) is running.
+A previous server process is still running. Kill it by finding the PID on the port and stopping it:
+
+**Windows:**
+```bash
+netstat -ano | findstr :5001
+taskkill /PID <PID> /F
+```
+
+Then run `npm start` again.
+
+### Images not loading
+
+Product images are served from the `uploads/` folder. This folder is included in the repository, so images should load automatically after cloning. If images are still missing, ensure the backend is running on port `5001`.
 
 ---
 
