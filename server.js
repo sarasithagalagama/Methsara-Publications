@@ -18,6 +18,7 @@ const orderRoutes = require("./epics/E3_OrderAndTransaction/routes/orderRoutes")
 const cartRoutes = require("./epics/E3_OrderAndTransaction/routes/cartRoutes");
 const supplierRoutes = require("./epics/E4_SupplierManagement/routes/supplierRoutes");
 const purchaseOrderRoutes = require("./epics/E4_SupplierManagement/routes/purchaseOrderRoutes"); // E4: Supplier Management
+const salesOrderRoutes = require("./epics/E4_SupplierManagement/routes/salesOrderRoutes"); // E4: Sales Orders (Distributors/Bookshops)
 const inventoryRoutes = require("./epics/E5_InventoryManagement/routes/inventoryRoutes");
 const couponRoutes = require("./epics/E6_PromotionAndLoyalty/routes/couponRoutes");
 const financialRoutes = require("./epics/E3_OrderAndTransaction/routes/financialRoutes"); // E3: Financial Management
@@ -56,6 +57,7 @@ app.use("/api/cart", cartRoutes); // E3: Shopping Cart
 app.use("/api/financial", financialRoutes); // E3: Financial Management
 app.use("/api/suppliers", supplierRoutes); // E4: Supplier Management
 app.use("/api/purchase-orders", purchaseOrderRoutes); // E4: Supplier Management
+app.use("/api/sales-orders", salesOrderRoutes); // E4: Sales Orders (Distributors/Bookshops)
 app.use("/api/inventory", inventoryRoutes); // E5: Inventory Management
 app.use("/api/coupons", couponRoutes); // E6: Promotion & Loyalty
 app.use("/api/reviews", reviewRoutes);
