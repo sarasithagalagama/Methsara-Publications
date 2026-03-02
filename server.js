@@ -4,6 +4,13 @@
 // Group: ISP_G05
 // ============================================
 
+const dns = require("dns");
+// Force Node.js to use public DNS for SRV lookups.
+// On Windows the default DNS server (fe80::1 IPv6 link-local) is unreachable
+// from Node.js's internal resolver, causing querySrv ECONNREFUSED on
+// mongodb+srv:// URIs even though the cluster is up and healthy.
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -38,16 +45,37 @@ app.use(morgan("dev")); // Logging
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Database Connection
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("✅ MongoDB Connected Successfully");
-    console.log("📦 Database:", mongoose.connection.name);
-  })
-  .catch((error) => {
-    console.error("❌ MongoDB Connection Error:", error.message);
-    process.exit(1);
-  });
+// Retries every 5 s (up to MONGO_MAX_RETRIES) so nodemon does not enter a
+// crash-loop when the Atlas cluster is temporarily unreachable.
+const MONGO_RETRY_INTERVAL_MS = 5000;
+const MONGO_MAX_RETRIES = 12; // ~1 minute total
+
+async function connectWithRetry(attempt = 1) {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log("[DB] MongoDB connected successfully.");
+    console.log("[DB] Database:", mongoose.connection.name);
+  } catch (error) {
+    console.error(
+      `[DB] Connection error (attempt ${attempt}/${MONGO_MAX_RETRIES}): ${error.message}`
+    );
+    if (attempt < MONGO_MAX_RETRIES) {
+      console.log(`[DB] Retrying in ${MONGO_RETRY_INTERVAL_MS / 1000}s...`);
+      setTimeout(() => connectWithRetry(attempt + 1), MONGO_RETRY_INTERVAL_MS);
+    } else {
+      // Do not call process.exit() here — keeps the process alive so nodemon
+      // does not restart in a crash-loop. DB-dependent routes will return 500
+      // until the connection is restored on the next manual restart.
+      console.error(
+        "[DB] Could not connect to MongoDB after maximum retries. " +
+        "Verify the Atlas cluster is not paused and that the current " +
+        "IP is whitelisted in Atlas > Network Access."
+      );
+    }
+  }
+}
+
+connectWithRetry();
 
 // API Routes
 app.use("/api/auth", authRoutes); // E1: User & Role Management
@@ -118,9 +146,9 @@ app.use((req, res) => {
 // Start Server
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-  console.log(`📍 API URL: http://localhost:${PORT}`);
+  console.log(`[Server] Running on port ${PORT}`);
+  console.log(`[Server] Environment: ${process.env.NODE_ENV}`);
+  console.log(`[Server] API URL: http://localhost:${PORT}`);
 });
 
 module.exports = app;
