@@ -1,9 +1,8 @@
-﻿// ============================================
-// [Epic E5] Inventory Management
-// --------------------------------------------
-// This is the "lookout" for our warehouse.
-// It automatically flags any book that is running low,
-// so the manager can reorder before we lose sales.
+// ============================================
+// Low Stock Alerts Page
+// Epic: E5 - Inventory Management
+// Owner: IT24100264 (Bandara N W C D)
+// Purpose: Flag low-stock books for reorder (E5.2)
 // ============================================
 
 import React, { useState, useEffect } from "react";
@@ -22,33 +21,25 @@ import "./LowStockAlerts.css";
 
 const LowStockAlerts = () => {
   const { user } = useAuth();
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState("");
   const [availableLocations, setAvailableLocations] = useState([]);
 
-  // Basic security check: only authorized personnel should manage inventory
+  // [E1.6] RBAC: only master or location inventory managers can act on alerts (e.g. create POs)
   const canEdit =
     user?.role === "master_inventory_manager" ||
     user?.role === "location_inventory_manager";
 
-  /**
-   * We load all available locations (Warehouses, Physical Shops)
-   * so the manager can filter alerts by a specific site.
-   */
-  // ─────────────────────────────────
+  // We load all available locations (Warehouses, Physical Shops)
+  // so the manager can filter alerts by a specific site.
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     fetchLocations();
   }, []);
 
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
   const fetchLocations = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -61,19 +52,15 @@ const LowStockAlerts = () => {
     }
   };
 
-  /**
-   * Every time the selected location changes, we re-run our
-   * stock check to show the most relevant warnings.
-   */
+  // Every time the selected location changes, we re-run our
+  // stock check to show the most relevant warnings.
   useEffect(() => {
     fetchAlerts();
   }, [location]);
 
-  /**
-   * [Epic E5.9] - Automated Stock Monitoring
-   * Our backend compares 'Current Quantity' against the 'Reorder Level'
-   * for every product at every location.
-   */
+  // [Epic E5.9] - Automated Stock Monitoring
+  // Our backend compares 'Current Quantity' against the 'Reorder Level'
+  // for every product at every location.
   const fetchAlerts = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -91,6 +78,7 @@ const LowStockAlerts = () => {
     }
   };
 
+  // [E5.9] Alert severity classification: critical = 0 stock or ≤25% of reorder level; warning = 26-50%; low = 51-100%
   const getAlertLevel = (currentStock, reorderLevel) => {
     if (currentStock === 0) return "critical";
     const safeReorder = Math.max(reorderLevel, 1);
@@ -100,9 +88,7 @@ const LowStockAlerts = () => {
     return "low";
   };
 
-  // ─────────────────────────────────
   // Render
-  // ─────────────────────────────────
   return (
     <div className="dashboard-container">
       <DashboardHeader
@@ -118,13 +104,6 @@ const LowStockAlerts = () => {
             icon: <AlertTriangle size={18} />,
             onClick: fetchAlerts,
             variant: "outline",
-          },
-          {
-            label: "Inventory Manager",
-            icon: <Package size={18} />,
-            onClick: () =>
-              (window.location.href = "/inventory-manager/dashboard"),
-            variant: "primary",
           },
         ]}
       />

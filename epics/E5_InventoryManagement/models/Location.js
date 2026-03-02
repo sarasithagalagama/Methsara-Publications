@@ -1,6 +1,7 @@
 ﻿// ============================================
 // Location Model
 // Epic: E5 - Inventory Management
+// Owner: IT24100264 (Bandara N W C D)
 // Purpose: Manage dynamic branch/warehouse locations (E5.7)
 // ============================================
 

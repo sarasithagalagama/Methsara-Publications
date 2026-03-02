@@ -1,14 +1,13 @@
 ﻿// ============================================
 // Location Controller
 // Epic: E5 - Inventory Management
+// Owner: IT24100264 (Bandara N W C D)
 // Purpose: Manage dynamic locations/branches (E5.7)
 // ============================================
 
-const Location = require('../models/Location');
+const Location = require("../models/Location");
 
-// @desc    Get all locations
-// @route   GET /api/locations
-// @access  Private
+// [E5.7] getLocations: returns all branches sorted with main warehouse first; self-heals duplicate main warehouse
 exports.getLocations = async (req, res) => {
   try {
     let locations = await Location.find().sort({
@@ -16,7 +15,7 @@ exports.getLocations = async (req, res) => {
       createdAt: -1,
     });
 
-    // Self-healing: Ensure only one main warehouse exists
+    // [E5.7] Self-healing data integrity: ensures only ONE location has isMainWarehouse=true
     const mainWarehouses = locations.filter((loc) => loc.isMainWarehouse);
     if (mainWarehouses.length > 1) {
       // Keep the first one (most recently created due to sort) and demote others
@@ -110,8 +109,8 @@ exports.updateLocation = async (req, res) => {
 
     // If the name changed, update all inventory records (E5 Sync)
     if (newName && newName !== oldName) {
-      const Inventory = require('../models/Inventory');
-      const User = require('../../E1_UserAndRoleManagement/models/User');
+      const Inventory = require("../models/Inventory");
+      const User = require("../../E1_UserAndRoleManagement/models/User");
       await Inventory.updateMany({ location: oldName }, { location: newName });
       await User.updateMany(
         { assignedLocation: oldName },

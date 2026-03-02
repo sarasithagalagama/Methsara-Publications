@@ -1,11 +1,21 @@
+// ============================================
+// Stock Transfer Routes
+// Epic: E5 - Inventory Management
+// Owner: IT24100264 (Bandara N W C D)
+// Purpose: Inter-branch stock transfer API endpoints
+// ============================================
+
 const express = require("express");
 const router = express.Router();
 const {
   requestTransfer,
   approveTransfer,
   getAllTransfers,
-} = require('../controllers/stockTransferController');
-const { protect, authorize } = require('../../E1_UserAndRoleManagement/middleware/auth');
+} = require("../controllers/stockTransferController");
+const {
+  protect,
+  authorize,
+} = require("../../E1_UserAndRoleManagement/middleware/auth");
 
 // All routes require authentication
 router.use(protect);

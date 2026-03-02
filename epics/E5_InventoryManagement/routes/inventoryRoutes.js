@@ -15,13 +15,21 @@ const {
   getStockMovements,
   updateInventorySettings,
   getInventoryStats,
-} = require('../controllers/inventoryController');
-const { protect, authorize } = require('../../E1_UserAndRoleManagement/middleware/auth');
+} = require("../controllers/inventoryController");
+const {
+  protect,
+  authorize,
+} = require("../../E1_UserAndRoleManagement/middleware/auth");
 
 // All routes require inventory manager or admin role
 router.use(protect);
 router.use(
-  authorize("master_inventory_manager", "location_inventory_manager", "admin"),
+  authorize(
+    "master_inventory_manager",
+    "location_inventory_manager",
+    "admin",
+    "supplier_manager",
+  ),
 );
 
 router.get("/location/:location", getStockByLocation); // E5.1, E5.2 - View stock
