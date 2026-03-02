@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Cart
 // Epic: E3 - Order & Transaction
 // Owner: IT24100191 (Jayasinghe D.B.P)
@@ -23,26 +23,22 @@ import {
 import "./Cart.css";
 
 const CHECKOUT_STEPS = ["Browse", "Cart", "Checkout", "Success"];
+// [E3.1] Visual stepper shows the customer's progress through the purchase funnel
 
 const Cart = () => {
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const { refreshCounts } = useAuth();
   const navigate = useNavigate();
 
-  // ─────────────────────────────────
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     fetchCart();
   }, []);
 
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
+  // [E3.1] Cart fetch: branches on token presence — guest uses localStorage, auth user uses server-side cart
   const fetchCart = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -68,7 +64,12 @@ const Cart = () => {
     }
   };
 
-  const updateQuantity = async (productId, newQuantity) => {
+  // [E3.2] Update quantity: mirrors the same guest/auth branch pattern as fetchCart
+  const updateQuantity = async (
+    productId,
+    newQuantity,
+    itemModel = "Product",
+  ) => {
     if (newQuantity < 1) return;
     try {
       const token = localStorage.getItem("token");
@@ -79,7 +80,9 @@ const Cart = () => {
           discount: 0,
         };
         const itemIndex = guestCart.items.findIndex(
-          (item) => item.product._id === productId,
+          (item) =>
+            item.product._id === productId &&
+            (item.itemModel || "Product") === itemModel,
         );
         if (itemIndex > -1) {
           guestCart.items[itemIndex].quantity = newQuantity;
@@ -94,7 +97,7 @@ const Cart = () => {
       }
       await axios.put(
         "/api/cart/update",
-        { productId, quantity: newQuantity },
+        { productId, quantity: newQuantity, itemModel },
         { headers: { Authorization: `Bearer ${token}` } },
       );
       fetchCart();
@@ -103,7 +106,7 @@ const Cart = () => {
     }
   };
 
-  const removeItem = async (productId) => {
+  const removeItem = async (productId, itemModel = "Product") => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -113,7 +116,11 @@ const Cart = () => {
           discount: 0,
         };
         guestCart.items = guestCart.items.filter(
-          (item) => item.product._id !== productId,
+          (item) =>
+            !(
+              item.product._id === productId &&
+              (item.itemModel || "Product") === itemModel
+            ),
         );
         guestCart.totalAmount = guestCart.items.reduce(
           (sum, item) => sum + item.price * item.quantity,
@@ -123,9 +130,12 @@ const Cart = () => {
         fetchCart();
         return;
       }
-      await axios.delete(`/api/cart/remove/${productId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(
+        `/api/cart/remove/${productId}?itemModel=${itemModel}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       fetchCart();
     } catch (error) {
       console.error("Error removing item:", error);
@@ -151,9 +161,7 @@ const Cart = () => {
   };
 
   if (loading) {
-    // ─────────────────────────────────
     // Render
-    // ─────────────────────────────────
     return (
       <div className="cart-modern-page">
         <div className="checkout-progress-modern">
@@ -248,10 +256,11 @@ const Cart = () => {
 
                 <div className="item-main-info-modern">
                   <span className="item-meta-modern">
-                    {item.product?.grade || "Education"} •{" "}
-                    {item.product?.author || "Various Authors"}
+                    {item.itemModel === "Product"
+                      ? `${item.product?.grade || "Education"} • ${item.product?.author || "Various Authors"}`
+                      : "Gift Voucher Catalog"}
                   </span>
-                  <h3>{item.product?.title}</h3>
+                  <h3>{item.product?.title || item.product?.name}</h3>
                   <p className="item-unit-price-modern">
                     LKR{" "}
                     {Number(item.price).toLocaleString(undefined, {
@@ -263,7 +272,11 @@ const Cart = () => {
                 <div className="item-qty-modern">
                   <button
                     onClick={() =>
-                      updateQuantity(item.product._id, item.quantity - 1)
+                      updateQuantity(
+                        item.product._id,
+                        item.quantity - 1,
+                        item.itemModel,
+                      )
                     }
                     disabled={item.quantity <= 1}
                   >
@@ -272,7 +285,11 @@ const Cart = () => {
                   <span>{item.quantity}</span>
                   <button
                     onClick={() =>
-                      updateQuantity(item.product._id, item.quantity + 1)
+                      updateQuantity(
+                        item.product._id,
+                        item.quantity + 1,
+                        item.itemModel,
+                      )
                     }
                   >
                     <Plus size={14} />
@@ -287,7 +304,7 @@ const Cart = () => {
                 </div>
 
                 <button
-                  onClick={() => removeItem(item.product._id)}
+                  onClick={() => removeItem(item.product._id, item.itemModel)}
                   className="remove-btn-modern"
                   title="Remove Item"
                 >

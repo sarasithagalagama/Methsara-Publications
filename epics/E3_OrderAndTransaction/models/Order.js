@@ -8,12 +8,13 @@
 const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema({
-  // Customer Information
+  // [E3.4] customer: optional to support guest checkout (E3.3) — if absent, guestEmail/guestName are required
   customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: false, // Allow guest checkout
   },
+  // [E3.4] guestEmail/guestName: conditionally required when no logged-in customer is present
   guestEmail: {
     type: String,
     required: function () {
@@ -32,8 +33,16 @@ const orderSchema = new mongoose.Schema({
     {
       product: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
+        // [E6.4] refPath: polymorphic reference — resolves to 'Product' or 'VoucherProduct' at query time
+        refPath: "items.itemModel",
         required: true,
+      },
+      // [E6.4] itemModel discriminator lets orders mix regular books and gift voucher products
+      itemModel: {
+        type: String,
+        required: true,
+        enum: ["Product", "VoucherProduct"],
+        default: "Product",
       },
       productTitle: String,
       productISBN: String,
@@ -63,19 +72,28 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  // [E3.9] Tax fields — taxRate sourced from Finance Manager's Tax Configuration
+  taxRate: {
+    type: Number,
+    default: 0,
+  },
+  taxAmount: {
+    type: Number,
+    default: 0,
+  },
   total: {
     type: Number,
     required: true,
   },
 
-  // Coupon Applied
+  // [E6.3] Coupon discount tracked separately so finance reports can break down discount sources
   couponCode: String,
   couponDiscount: {
     type: Number,
     default: 0,
   },
 
-  // Gift Voucher Applied
+  // [E6.4] Gift voucher discount tracked separately; balance deducted from GiftVoucher doc on save
   giftVoucherCode: String,
   giftVoucherDiscount: {
     type: Number,
@@ -153,7 +171,8 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
-// Calculate subtotals
+// [E3.3] Pre-save: recalculates all item subtotals and the order total before every save
+// Ensures total = subtotal + taxAmount - couponDiscount - giftVoucherDiscount + deliveryFee
 orderSchema.pre("save", function (next) {
   // Calculate item subtotals
   this.items.forEach((item) => {
@@ -163,9 +182,13 @@ orderSchema.pre("save", function (next) {
   // Calculate order subtotal
   this.subtotal = this.items.reduce((sum, item) => sum + item.subtotal, 0);
 
+  // Calculate tax on subtotal (taxRate is a percentage, e.g. 18 = 18%)
+  this.taxAmount = Math.round((this.subtotal * (this.taxRate || 0)) / 100);
+
   // Calculate total
   this.total =
-    this.subtotal -
+    this.subtotal +
+    this.taxAmount -
     this.discount -
     this.couponDiscount -
     this.giftVoucherDiscount +

@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Shopping Cart Component
 // Epic: E3 - Order & Transaction
 // Owner: IT24100191 (Jayasinghe D.B.P)
@@ -11,21 +11,17 @@ import "./Orders.css";
 
 function Cart() {
   const navigate = useNavigate();
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
   const [cartItems, setCartItems] = useState([]);
 
-  // ─────────────────────────────────
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     loadCart();
   }, []);
 
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
+  // [E3.1] Cart component uses legacy localStorage 'cart' key (not 'guestCart') — an earlier implementation
+  // The pages/Cart.jsx uses the unified guestCart + API system instead
   const loadCart = () => {
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
     setCartItems(cart);
@@ -63,9 +59,7 @@ function Cart() {
     navigate("/checkout");
   };
 
-  // ─────────────────────────────────
   // Render
-  // ─────────────────────────────────
   return (
     <div className="container">
       <h1>Shopping Cart</h1>

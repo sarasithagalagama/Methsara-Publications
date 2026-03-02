@@ -5,15 +5,15 @@
 // Purpose: Financial dashboard and reporting (E3.9, E3.10, E3.11)
 // ============================================
 
-const Order = require('../models/Order');
-const User = require('../../E1_UserAndRoleManagement/models/User');
-const FinancialTransaction = require('../models/FinancialTransaction');
-const Supplier = require('../../E4_SupplierManagement/models/Supplier');
-const PurchaseOrder = require('../../E4_SupplierManagement/models/PurchaseOrder');
+const Order = require("../models/Order");
+const User = require("../../E1_UserAndRoleManagement/models/User");
+const FinancialTransaction = require("../models/FinancialTransaction");
+const Supplier = require("../../E4_SupplierManagement/models/Supplier");
+const PurchaseOrder = require("../../E4_SupplierManagement/models/PurchaseOrder");
 const PDFDocument = require("pdfkit");
 const { Parser } = require("json2csv");
 
-// Financial Dashboard (E3.9)
+// [E3.9] getFinancialDashboard: aggregates revenue from Orders + FinancialTransactions; cross-epic (imports E4 PO)
 const getFinancialDashboard = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
@@ -25,26 +25,33 @@ const getFinancialDashboard = async (req, res) => {
       };
     }
 
-    // --- 1. Basic Stats Calculation ---
-    // Paid Orders Revenue
+    // [E3.9] Revenue from Orders (only Paid orders counted to avoid inflating figures)
     const orderRevenue = await Order.aggregate([
       { $match: { ...dateFilter, paymentStatus: "Paid" } },
       { $group: { _id: null, total: { $sum: "$total" }, count: { $sum: 1 } } },
     ]);
 
-    // Financial Transactions Income
+    // [E3.9] FinancialTransaction income: custom transactions entered by finance_manager
     const txIncome = await FinancialTransaction.aggregate([
-      { $match: { ...dateFilter, isIncome: true, status: "Completed" } },
+      {
+        $match: {
+          ...dateFilter,
+          isIncome: true,
+          status: "Completed",
+          isArchived: { $ne: true },
+        },
+      },
       { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
 
-    // Financial Transactions Expenses
+    // [E3.9] Expenses: non-cancelled financial transactions (e.g. supplier payments)
     const txExpenses = await FinancialTransaction.aggregate([
       {
         $match: {
           ...dateFilter,
           isIncome: false,
           status: { $ne: "Cancelled" },
+          isArchived: { $ne: true },
         },
       },
       { $group: { _id: null, total: { $sum: "$amount" } } },
@@ -56,7 +63,7 @@ const getFinancialDashboard = async (req, res) => {
     const totalExpenses = txExpenses[0]?.total || 0;
     const netIncome = totalRevenue - totalExpenses;
 
-    // --- 2. Growth Calculation (Last 30 vs Prev 30) ---
+    // [E3.9] Growth comparison: last 30 days vs prior 30 days for revenue trend indicator
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const sixtyDaysAgo = new Date();
@@ -270,11 +277,33 @@ const processRefund = async (req, res) => {
   }
 };
 
+// CRUD: Get single transaction by ID
+const getTransaction = async (req, res) => {
+  try {
+    const transaction = await FinancialTransaction.findById(
+      req.params.id,
+    ).populate("processedBy", "name");
+    if (!transaction) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Transaction not found" });
+    }
+    res.status(200).json({ success: true, transaction });
+  } catch (error) {
+    console.error("Get transaction error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching transaction",
+      error: error.message,
+    });
+  }
+};
+
 // CRUD: Get all transactions (Salary, Supplier Payments, Refunds)
 const getTransactions = async (req, res) => {
   try {
     const { type, startDate, endDate } = req.query;
-    const filter = {};
+    const filter = { isArchived: { $ne: true } }; // Exclude archived transactions
     if (type) filter.type = type;
     if (startDate && endDate) {
       filter.date = { $gte: new Date(startDate), $lte: new Date(endDate) };
@@ -282,11 +311,7 @@ const getTransactions = async (req, res) => {
 
     const transactions = await FinancialTransaction.find(filter)
       .sort({ date: -1 })
-      .populate("processedBy", "name")
-      .populate({
-        path: "relatedId",
-        refPath: "type", // Note: This needs careful handling if type is not the model name
-      });
+      .populate("processedBy", "name");
 
     res.status(200).json({ success: true, transactions });
   } catch (error) {
@@ -332,7 +357,7 @@ const updateTransaction = async (req, res) => {
 
     // INTERCEPTION: Maker-Checker for Non-Admins
     if (req.user.role !== "admin") {
-      const ApprovalRequest = require('../../E1_UserAndRoleManagement/models/ApprovalRequest');
+      const ApprovalRequest = require("../../E1_UserAndRoleManagement/models/ApprovalRequest");
 
       const newRequest = await ApprovalRequest.create({
         module: "FinancialTransaction",
@@ -369,22 +394,21 @@ const updateTransaction = async (req, res) => {
   }
 };
 
-// CRUD: Delete Transaction
-const deleteTransaction = async (req, res) => {
+// Archive Transaction (soft delete — record is never removed from DB)
+const archiveTransaction = async (req, res) => {
   try {
     const transaction = await FinancialTransaction.findById(req.params.id);
     if (!transaction)
       return res.status(404).json({ success: false, message: "Not found" });
 
-    // Reverse balance update if Supplier Payment
-    if (transaction.type === "Supplier Payment") {
-      await Supplier.findByIdAndUpdate(transaction.relatedId, {
-        $inc: { outstandingBalance: transaction.amount },
-      });
-    }
+    if (transaction.isArchived)
+      return res
+        .status(400)
+        .json({ success: false, message: "Transaction is already archived" });
 
-    await transaction.deleteOne();
-    res.status(200).json({ success: true, message: "Deleted" });
+    transaction.isArchived = true;
+    await transaction.save();
+    res.status(200).json({ success: true, message: "Transaction archived" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -402,10 +426,10 @@ const payPurchaseOrder = async (req, res) => {
         .json({ success: false, message: "Purchase order not found" });
     }
 
-    if (po.status !== "Received" && po.status !== "Dispatched") {
+    if (po.status !== "Received") {
       return res.status(400).json({
         success: false,
-        message: "Can only process payments for fulfilled orders",
+        message: "Can only process payments for received orders",
       });
     }
 
@@ -415,7 +439,16 @@ const payPurchaseOrder = async (req, res) => {
         .json({ success: false, message: "Order already paid" });
     }
 
-    // Update PO status
+    // Validate supplier is a Vendor (Purchase Orders are only for Vendors)
+    if (po.supplier && po.supplier.supplierType !== "Vendor") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Purchase orders should only be for Vendors. Use Sales Orders for Customers.",
+      });
+    }
+
+    // Update PO payment status
     po.paymentStatus = "Paid";
     po.statusHistory.push({
       status: po.status,
@@ -425,32 +458,32 @@ const payPurchaseOrder = async (req, res) => {
 
     await po.save();
 
-    const isCollection =
-      po.supplier &&
-      (po.supplier.category === "Distributor" ||
-        po.supplier.category === "Bookshop");
-
-    // Create financial transaction
+    // Create financial transaction (EXPENSE - we pay the vendor)
     await FinancialTransaction.create({
-      type: isCollection ? "Partner Collection" : "Supplier Payment",
+      type: "Supplier Payment",
       amount: po.totalAmount,
       relatedId: po.supplier._id,
-      description: isCollection
-        ? `Payment collected from ${po.supplier.name} for Order #${po.poNumber}`
-        : `Payment for Purchase Order #${po.poNumber}`,
+      description: `Payment to vendor ${po.supplier.name} for PO #${po.poNumber}`,
       processedBy: req.user.id,
       date: Date.now(),
-      isIncome: isCollection,
+      isIncome: false, // This is an expense (we pay out)
     });
 
-    // Also update supplier balance
+    // Update supplier's outstanding balance (reduce what we owe them)
     await Supplier.findByIdAndUpdate(po.supplier._id, {
-      $inc: { outstandingBalance: -po.totalAmount },
+      $inc: {
+        outstandingBalance: -po.totalAmount,
+        totalPaid: po.totalAmount,
+      },
+      $set: {
+        lastPaymentDate: Date.now(),
+        hasDebt: po.supplier.outstandingBalance - po.totalAmount > 0,
+      },
     });
 
     res.status(200).json({
       success: true,
-      message: "Purchase order paid successfully",
+      message: "Purchase order payment processed successfully",
       purchaseOrder: po,
     });
   } catch (error) {
@@ -653,9 +686,10 @@ module.exports = {
   generateInvoice,
   processRefund,
   getTransactions,
+  getTransaction,
   createTransaction,
   updateTransaction,
-  deleteTransaction,
+  archiveTransaction,
   payPurchaseOrder,
   generateFinancialPDF,
   generateFinancialCSV,
