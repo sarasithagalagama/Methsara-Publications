@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // StockAdjustmentModal
 // Epic: E5 - Inventory Management
 // Owner: IT24100264 (Bandara N W C D)
@@ -7,7 +7,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Modal from "../../../../components/common/Modal";
-import { Input, Select, Button, TextArea } from "../../../../components/common/Forms";
+import {
+  Input,
+  Select,
+  Button,
+  TextArea,
+} from "../../../../components/common/Forms";
 
 const StockAdjustmentModal = ({
   isOpen,
@@ -16,20 +21,17 @@ const StockAdjustmentModal = ({
   item,
   location,
 }) => {
-  // ─────────────────────────────────
   // State Variables
-  // ─────────────────────────────────
-  const [action, setAction] = useState("add"); // "add" or "remove"
+  const [action, setAction] = useState("add"); // [E5.3] 'add' increases stock, 'remove' decreases — converted to signed int before API call
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [selectedProductId, setSelectedProductId] = useState("");
   const [allInventory, setAllInventory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [reorderPoint, setReorderPoint] = useState("");
+  const [error, setError] = useState("");
 
-  // ─────────────────────────────────
   // Event Handlers
-  // ─────────────────────────────────
   const fetchAllInventory = async () => {
     if (!location) return;
     setLoading(true);
@@ -46,9 +48,7 @@ const StockAdjustmentModal = ({
     }
   };
 
-  // ─────────────────────────────────
   // Side Effects
-  // ─────────────────────────────────
   useEffect(() => {
     if (isOpen && !item) {
       fetchAllInventory();
@@ -61,24 +61,26 @@ const StockAdjustmentModal = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError("");
     if (!amount || !reason || !selectedProductId) return;
 
     const parsedAmount = parseInt(amount);
     if (parsedAmount <= 0) {
-      alert("Amount must be a positive number");
+      setError("Amount must be a positive number.");
       return;
     }
 
     const currentItem =
       item || allInventory.find((inv) => inv._id === selectedProductId);
 
+    // [E5.3] Guard: cannot remove more than available quantity (prevents negative stock)
     if (
       action === "remove" &&
       currentItem &&
       parsedAmount > (currentItem.availableQuantity ?? currentItem.quantity)
     ) {
-      alert(
-        `Cannot remove ${parsedAmount} items. Only ${currentItem.availableQuantity ?? currentItem.quantity} items are available in stock.`,
+      setError(
+        `Cannot remove ${parsedAmount} items. Only ${currentItem.availableQuantity ?? currentItem.quantity} available in stock.`,
       );
       return;
     }
@@ -102,15 +104,14 @@ const StockAdjustmentModal = ({
     setReason("");
     setAction("add");
     setReorderPoint("");
+    setError("");
     if (!item) setSelectedProductId("");
   };
 
   const currentItem =
     item || allInventory.find((inv) => inv._id === selectedProductId);
 
-  // ─────────────────────────────────
   // Render
-  // ─────────────────────────────────
   return (
     <Modal
       isOpen={isOpen}
@@ -232,6 +233,19 @@ const StockAdjustmentModal = ({
         />
 
         <div className="dash-modal-actions" style={{ marginTop: "2rem" }}>
+          {error && (
+            <p
+              style={{
+                color: "var(--error-color, #e53e3e)",
+                fontSize: "0.875rem",
+                marginBottom: "0.75rem",
+                width: "100%",
+                textAlign: "center",
+              }}
+            >
+              {error}
+            </p>
+          )}
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>

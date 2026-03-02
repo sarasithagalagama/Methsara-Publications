@@ -1,3 +1,10 @@
+// ============================================
+// Location Routes
+// Epic: E5 - Inventory Management
+// Owner: IT24100264 (Bandara N W C D)
+// Purpose: Branch/warehouse location API endpoints
+// ============================================
+
 const express = require("express");
 const router = express.Router();
 const {
@@ -5,8 +12,11 @@ const {
   createLocation,
   updateLocation,
   deleteLocation,
-} = require('../controllers/locationController');
-const { protect, authorize } = require('../../E1_UserAndRoleManagement/middleware/auth');
+} = require("../controllers/locationController");
+const {
+  protect,
+  authorize,
+} = require("../../E1_UserAndRoleManagement/middleware/auth");
 
 router.use(protect);
 
