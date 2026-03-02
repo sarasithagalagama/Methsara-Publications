@@ -4,10 +4,10 @@ package-lock.json
 yarn.lock
 
 # Environment variables
-.env
-.env.local
-.env.development
-.env.production
+# .env
+# .env.local
+# .env.development
+# .env.production
 
 # Build files
 build/
@@ -38,7 +38,6 @@ coverage/
 # Temporary files
 tmp/
 temp/
-uploads/
 
 # Production
 .vercel
