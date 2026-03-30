@@ -104,6 +104,11 @@ const InventoryManagerDashboard = () => {
   // Search state for inventory table
   const [inventorySearch, setInventorySearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  // [E5.7] Client-side status filter, sort and pagination for inventory table
+  const [inventoryStatusFilter, setInventoryStatusFilter] = useState("All");
+  const [inventorySort, setInventorySort] = useState("none");
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const inventoryPerPage = 10;
 
   // Stock movements state for filtering and pagination
   const [movementSearch, setMovementSearch] = useState("");
@@ -845,8 +850,28 @@ const InventoryManagerDashboard = () => {
     });
   };
 
-  // Filtered inventory for search (now handled server-side, but keeping this for local consistency if needed)
-  const filteredInventory = inventory;
+  // [E5.7] Client-side status filter + sort applied on top of server-side search results
+  const filteredInventory = inventory
+    .filter((item) => {
+      const qty = item.availableQuantity ?? item.quantity;
+      const threshold = item.reorderPoint || item.lowStockThreshold || 0;
+      if (inventoryStatusFilter === "In Stock") return qty > threshold;
+      if (inventoryStatusFilter === "Low Stock") return qty > 0 && qty <= threshold;
+      if (inventoryStatusFilter === "Out of Stock") return qty === 0;
+      return true;
+    })
+    .sort((a, b) => {
+      const qtyA = a.availableQuantity ?? a.quantity;
+      const qtyB = b.availableQuantity ?? b.quantity;
+      if (inventorySort === "high-to-low") return qtyB - qtyA;
+      if (inventorySort === "low-to-high") return qtyA - qtyB;
+      return 0;
+    });
+  const totalInventoryPages = Math.ceil(filteredInventory.length / inventoryPerPage);
+  const paginatedInventory = filteredInventory.slice(
+    (inventoryPage - 1) * inventoryPerPage,
+    inventoryPage * inventoryPerPage,
+  );
 
   // Filtering & Pagination For Movements
   const filteredMovements = movements.filter((move) => {
@@ -875,10 +900,15 @@ const InventoryManagerDashboard = () => {
     movementPage * movementsPerPage,
   );
 
-  // Reset to first page if search/filter changes
+  // Reset movement page on filter/search change
   useEffect(() => {
     setMovementPage(1);
   }, [movementSearch, movementTypeFilter]);
+
+  // Reset inventory page on status filter, sort or search change
+  useEffect(() => {
+    setInventoryPage(1);
+  }, [inventoryStatusFilter, inventorySort, debouncedSearch]);
   if (loading) {
     return (
       <div className="dashboard-container">
@@ -1065,11 +1095,12 @@ const InventoryManagerDashboard = () => {
       {/* ── INVENTORY TAB ── */}
       {activeTab === "inventory" && (
         <div className="dashboard-card" id="inventory-section">
-          <div className="dashboard-card-header">
+          <div className="dashboard-card-header" style={{ flexWrap: "wrap", gap: "1rem" }}>
             <h2 className="card-title">Stock at {selectedLocation}</h2>
-            <div className="card-header-actions">
-              <div className="search-bar" style={{ maxWidth: "240px" }}>
-                <Search size={16} className="detail-label-icon" />
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+              {/* Search */}
+              <div className="search-bar" style={{ maxWidth: "210px", minWidth: "140px", flex: "0 1 210px" }}>
+                <Search size={15} className="detail-label-icon" />
                 <input
                   type="text"
                   placeholder="Search product or ISBN…"
@@ -1077,6 +1108,42 @@ const InventoryManagerDashboard = () => {
                   onChange={(e) => setInventorySearch(e.target.value)}
                 />
               </div>
+              {/* Status filter */}
+              <select
+                value={inventoryStatusFilter}
+                onChange={(e) => setInventoryStatusFilter(e.target.value)}
+                className="form-select"
+                style={{ width: "130px", flex: "0 0 130px" }}
+                aria-label="Filter by stock status"
+              >
+                <option value="All">All Statuses</option>
+                <option value="In Stock">In Stock</option>
+                <option value="Low Stock">Low Stock</option>
+                <option value="Out of Stock">Out of Stock</option>
+              </select>
+              {/* Sort */}
+              <select
+                value={inventorySort}
+                onChange={(e) => setInventorySort(e.target.value)}
+                className="form-select"
+                style={{ width: "148px", flex: "0 0 148px" }}
+                aria-label="Sort by stock level"
+              >
+                <option value="none">Sort: Default</option>
+                <option value="high-to-low">Stock: High → Low</option>
+                <option value="low-to-high">Stock: Low → High</option>
+              </select>
+              {/* Clear */}
+              {(inventoryStatusFilter !== "All" || inventorySort !== "none" || inventorySearch) && (
+                <button
+                  className="btn-icon"
+                  title="Clear all filters"
+                  onClick={() => { setInventoryStatusFilter("All"); setInventorySort("none"); setInventorySearch(""); }}
+                  style={{ width: "auto", padding: "0 10px", height: "34px", display: "flex", alignItems: "center", gap: "4px", fontSize: "0.8rem", border: "1px solid var(--border-color)", borderRadius: "6px" }}
+                >
+                  <X size={13} /> Clear
+                </button>
+              )}
             </div>
           </div>
 
@@ -1096,13 +1163,13 @@ const InventoryManagerDashboard = () => {
                 {filteredInventory.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="table-empty-state">
-                      {inventorySearch
-                        ? "No items match your search."
+                      {inventorySearch || inventoryStatusFilter !== "All"
+                        ? "No items match your search or filter."
                         : "No inventory data for this location."}
                     </td>
                   </tr>
                 ) : (
-                  filteredInventory.map((item) => (
+                  paginatedInventory.map((item) => (
                     <tr key={item._id}>
                       <td>
                         <strong>{item.product?.title || "N/A"}</strong>
@@ -1171,6 +1238,54 @@ const InventoryManagerDashboard = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination controls */}
+          {totalInventoryPages > 1 && (
+            <div className="pagination-controls" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 0 0" }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--text-light)" }}>
+                Showing {Math.min((inventoryPage - 1) * inventoryPerPage + 1, filteredInventory.length)}–{Math.min(inventoryPage * inventoryPerPage, filteredInventory.length)} of {filteredInventory.length} items
+              </span>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button
+                  className="btn btn-outline"
+                  disabled={inventoryPage === 1}
+                  onClick={() => setInventoryPage((p) => p - 1)}
+                  style={{ padding: "6px 14px", fontSize: "0.85rem" }}
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalInventoryPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalInventoryPages || Math.abs(p - inventoryPage) <= 1)
+                  .reduce((acc, p, idx, arr) => {
+                    if (idx > 0 && p - arr[idx - 1] > 1) acc.push("...");
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((p, idx) =>
+                    p === "..." ? (
+                      <span key={`ellipsis-${idx}`} style={{ padding: "6px 4px", fontSize: "0.85rem", color: "var(--text-light)" }}>…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        className={`btn ${inventoryPage === p ? "btn-primary" : "btn-outline"}`}
+                        onClick={() => setInventoryPage(p)}
+                        style={{ padding: "6px 12px", fontSize: "0.85rem", minWidth: "36px" }}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+                <button
+                  className="btn btn-outline"
+                  disabled={inventoryPage === totalInventoryPages}
+                  onClick={() => setInventoryPage((p) => p + 1)}
+                  style={{ padding: "6px 14px", fontSize: "0.85rem" }}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
