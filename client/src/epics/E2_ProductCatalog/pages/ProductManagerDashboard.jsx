@@ -282,7 +282,7 @@ const ProductManagerDashboard = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const productsRes = await axios.get("/api/products?includeArchived=true");
+      const productsRes = await axios.get("/api/products?includeArchived=true&limit=1000");
       const allProducts = productsRes.data.products || [];
 
       const ratedProducts = allProducts.filter((p) => p.averageRating > 0);
