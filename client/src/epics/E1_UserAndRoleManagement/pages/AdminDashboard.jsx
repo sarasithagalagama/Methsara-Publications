@@ -316,6 +316,73 @@ const AdminDashboard = () => {
         ]}
       />
 
+      {/* ── Priority Alert Banner ── */}
+      {(pendingApprovals.length > 0 || stockAlerts.length > 0) && (
+        <div style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "10px",
+          marginBottom: "18px",
+          padding: "14px 18px",
+          background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+          border: "1px solid #f59e0b",
+          borderLeft: "4px solid #f59e0b",
+          borderRadius: "10px",
+          alignItems: "center",
+        }}>
+          <Bell size={18} style={{ color: "#d97706", flexShrink: 0 }} />
+          <span style={{ fontWeight: 700, color: "#92400e", fontSize: "0.9rem", marginRight: "6px" }}>
+            Action Required:
+          </span>
+          {pendingApprovals.length > 0 && (
+            <span
+              style={{
+                background: "#fbbf24",
+                color: "#78350f",
+                borderRadius: "20px",
+                padding: "3px 12px",
+                fontSize: "0.82rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              onClick={() => document.getElementById("approvals-section")?.scrollIntoView({ behavior: "smooth" })}
+            >
+              ✏️ {pendingApprovals.length} pending approval{pendingApprovals.length > 1 ? "s" : ""}
+            </span>
+          )}
+          {stockAlerts.length > 0 && (
+            <span
+              style={{
+                background: "#fca5a5",
+                color: "#7f1d1d",
+                borderRadius: "20px",
+                padding: "3px 12px",
+                fontSize: "0.82rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+              onClick={() => document.getElementById("stock-alerts-section")?.scrollIntoView({ behavior: "smooth" })}
+            >
+              🔴 {stockAlerts.length} low-stock / out-of-stock alert{stockAlerts.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Pending Approvals Table — highest priority, above stats */}
+      {pendingApprovals.length > 0 && (
+        <div id="approvals-section">
+          <DashboardSection title="Pending Approvals (Security & Edits)">
+            <DashboardTable
+              columns={pendingApprovalColumns}
+              data={pendingApprovals}
+              searchable={false}
+              rowsPerPage={5}
+            />
+          </DashboardSection>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="dashboard-grid compact-grid dashboard-grid-5">
         <StatCard
@@ -365,18 +432,8 @@ const AdminDashboard = () => {
         />
       </div>
 
-      {pendingApprovals.length > 0 && (
-        <DashboardSection title="Pending Approvals (Security & Edits)">
-          <DashboardTable
-            columns={pendingApprovalColumns}
-            data={pendingApprovals}
-            searchable={false}
-            rowsPerPage={5}
-          />
-        </DashboardSection>
-      )}
-
       {stockAlerts.length > 0 && (
+        <div id="stock-alerts-section">
         <DashboardSection
           title={`Low Stock Alerts (${stockAlerts.length})`}
           action={
@@ -464,6 +521,7 @@ const AdminDashboard = () => {
             emptyMessage="No low stock alerts."
           />
         </DashboardSection>
+        </div>
       )}
 
       {/* Charts */}

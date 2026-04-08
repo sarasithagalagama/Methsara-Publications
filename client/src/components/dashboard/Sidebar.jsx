@@ -2,41 +2,42 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../epics/E1_UserAndRoleManagement/context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import {
-  LayoutDashboard, // Overview
-  Users, // Admin/Users
-  ShoppingCart, // Orders
-  Package, // Products
-  Truck, // Suppliers
-  BarChart2, // Analytics/Marketing
-  DollarSign, // Finance
-  FileText, // Reports
-  Settings, // Settings
+  LayoutDashboard,
+  Users,
+  ShoppingCart,
+  Package,
+  Truck,
+  BarChart2,
+  DollarSign,
+  FileText,
+  Settings,
   LogOut,
   Bell,
-  Box,
   ClipboardList,
   Tags,
   Megaphone,
   Gift,
-  ShoppingBag, // Sales Orders
-  TrendingDown, // Debt Tracker
+  ShoppingBag,
+  TrendingDown,
+  Sun,
+  Moon,
+  BookOpen,
 } from "lucide-react";
-import logo from "../../assets/logo.png";
 import "./dashboard.css";
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [alertCount, setAlertCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
 
   const isActive = (path) => location.pathname.startsWith(path);
-
   const role = user?.role;
 
   useEffect(() => {
-    // Only fetch alerts if the user is admin or an inventory manager
     if (
       role === "admin" ||
       role === "master_inventory_manager" ||
@@ -49,14 +50,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
             headers: { Authorization: `Bearer ${token}` },
           });
           setAlertCount(res.data.alerts?.length || 0);
-        } catch (error) {
-          console.error("Error fetching alert count for sidebar:", error);
-        }
+        } catch {}
       };
 
-      fetchAlertsCount();
-
-      // Fetch pending orders count for Inventory Managers
       const fetchOrdersCount = async () => {
         try {
           const token = localStorage.getItem("token");
@@ -66,197 +62,79 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
           const pending = (res.data.orders || []).filter(
             (o) =>
               (o.orderStatus === "Pending" || o.orderStatus === "Processing") &&
-              o.orderStatus !== "Cancelled",
+              o.orderStatus !== "Cancelled"
           ).length;
           setOrderCount(pending);
-        } catch (error) {
-          console.error("Error fetching order count for sidebar:", error);
-        }
+        } catch {}
       };
 
+      fetchAlertsCount();
       fetchOrdersCount();
     }
   }, [role]);
 
-  // Define menu items based on role
   const getMenuItems = () => {
     switch (role) {
       case "admin":
         return [
-          {
-            path: "/admin/dashboard",
-            icon: <LayoutDashboard size={20} />,
-            label: "Overview",
-          },
-          { path: "/admin/users", icon: <Users size={20} />, label: "Users" },
-          {
-            path: "/admin/products",
-            icon: <Package size={20} />,
-            label: "Products",
-          },
-          {
-            path: "/admin/orders",
-            icon: <ShoppingCart size={20} />,
-            label: "Orders",
-          },
+          { path: "/admin/dashboard",  icon: <LayoutDashboard size={18} />, label: "Overview" },
+          { path: "/admin/users",       icon: <Users size={18} />,           label: "Users" },
+          { path: "/admin/products",    icon: <Package size={18} />,         label: "Products" },
+          { path: "/admin/orders",      icon: <ShoppingCart size={18} />,    label: "Orders" },
           {
             path: "/inventory-manager/alerts",
-            icon: <Bell size={20} />,
-            label: (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
-              >
-                <span>Stock Alerts</span>
-                {alertCount > 0 && (
-                  <span className="sidebar-badge danger">{alertCount}</span>
-                )}
-              </div>
-            ),
+            icon: <Bell size={18} />,
+            label: "Stock Alerts",
+            badge: alertCount > 0 ? alertCount : null,
+            badgeVariant: "danger",
           },
-          {
-            path: "/admin/settings",
-            icon: <Settings size={20} />,
-            label: "Settings",
-          },
+          { path: "/admin/settings",    icon: <Settings size={18} />,        label: "Settings" },
         ];
       case "finance_manager":
         return [
-          {
-            path: "/finance-manager/dashboard",
-            icon: <LayoutDashboard size={20} />,
-            label: "Overview",
-          },
-          {
-            path: "/finance-manager/transactions",
-            icon: <DollarSign size={20} />,
-            label: "Transactions",
-          },
-          {
-            path: "/finance-manager/payroll",
-            icon: <Users size={20} />,
-            label: "Payroll",
-          },
-          {
-            path: "/finance-manager/reports",
-            icon: <FileText size={20} />,
-            label: "Reports",
-          },
+          { path: "/finance-manager/dashboard",    icon: <LayoutDashboard size={18} />, label: "Overview" },
+          { path: "/finance-manager/transactions", icon: <DollarSign size={18} />,      label: "Transactions" },
+          { path: "/finance-manager/payroll",      icon: <Users size={18} />,           label: "Payroll" },
+          { path: "/finance-manager/reports",      icon: <FileText size={18} />,        label: "Reports" },
         ];
       case "master_inventory_manager":
       case "location_inventory_manager":
         return [
-          {
-            path: "/inventory-manager/dashboard",
-            icon: <LayoutDashboard size={20} />,
-            label: "Overview",
-          },
+          { path: "/inventory-manager/dashboard",          icon: <LayoutDashboard size={18} />, label: "Overview" },
           {
             path: "/inventory-manager/dashboard?tab=dispatch",
-            icon: <ShoppingCart size={20} />,
-            label: (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
-              >
-                <span>Orders</span>
-                {orderCount > 0 && (
-                  <span className="sidebar-badge warning">{orderCount}</span>
-                )}
-              </div>
-            ),
+            icon: <ShoppingCart size={18} />,
+            label: "Orders",
+            badge: orderCount > 0 ? orderCount : null,
+            badgeVariant: "warning",
           },
           {
             path: "/inventory-manager/alerts",
-            icon: <Bell size={20} />,
-            label: (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
-              >
-                <span>Alerts</span>
-                {alertCount > 0 && (
-                  <span className="sidebar-badge danger">{alertCount}</span>
-                )}
-              </div>
-            ),
+            icon: <Bell size={18} />,
+            label: "Alerts",
+            badge: alertCount > 0 ? alertCount : null,
+            badgeVariant: "danger",
           },
         ];
       case "supplier_manager":
         return [
-          {
-            path: "/supplier-manager/dashboard",
-            icon: <LayoutDashboard size={20} />,
-            label: "Overview",
-          },
-          {
-            path: "/supplier-manager/suppliers",
-            icon: <Truck size={20} />,
-            label: "Partner Directory",
-          },
-          {
-            path: "/supplier-manager/purchase-orders",
-            icon: <ClipboardList size={20} />,
-            label: "Purchase Orders",
-          },
-          {
-            path: "/supplier-manager/sales-orders",
-            icon: <ShoppingBag size={20} />,
-            label: "Sales Orders",
-          },
-          {
-            path: "/supplier-manager/debt-tracker",
-            icon: <TrendingDown size={20} />,
-            label: "Debt Tracker",
-          },
+          { path: "/supplier-manager/dashboard",       icon: <LayoutDashboard size={18} />, label: "Overview" },
+          { path: "/supplier-manager/suppliers",        icon: <Truck size={18} />,           label: "Partner Directory" },
+          { path: "/supplier-manager/purchase-orders",  icon: <ClipboardList size={18} />,   label: "Purchase Orders" },
+          { path: "/supplier-manager/sales-orders",     icon: <ShoppingBag size={18} />,     label: "Sales Orders" },
+          { path: "/supplier-manager/debt-tracker",     icon: <TrendingDown size={18} />,    label: "Debt Tracker" },
         ];
       case "product_manager":
         return [
-          {
-            path: "/product-manager/dashboard",
-            icon: <LayoutDashboard size={20} />,
-            label: "Overview",
-          },
-          {
-            path: "/product-manager/categories",
-            icon: <Tags size={20} />,
-            label: "Classification Manager",
-          },
+          { path: "/product-manager/dashboard",   icon: <LayoutDashboard size={18} />, label: "Overview" },
+          { path: "/product-manager/categories",  icon: <Tags size={18} />,            label: "Classification" },
         ];
       case "marketing_manager":
         return [
-          {
-            path: "/marketing-manager/dashboard",
-            icon: <LayoutDashboard size={20} />,
-            label: "Overview",
-          },
-          {
-            path: "/marketing-manager/campaigns",
-            icon: <Megaphone size={20} />,
-            label: "Campaigns",
-          },
-          {
-            path: "/marketing-manager/analytics",
-            icon: <BarChart2 size={20} />,
-            label: "Analytics",
-          },
-          {
-            path: "/marketing-manager/gift-vouchers",
-            icon: <Gift size={20} />,
-            label: "Gift Vouchers",
-          },
+          { path: "/marketing-manager/dashboard",    icon: <LayoutDashboard size={18} />, label: "Overview" },
+          { path: "/marketing-manager/campaigns",    icon: <Megaphone size={18} />,       label: "Campaigns" },
+          { path: "/marketing-manager/analytics",    icon: <BarChart2 size={18} />,       label: "Analytics" },
+          { path: "/marketing-manager/gift-vouchers",icon: <Gift size={18} />,            label: "Gift Vouchers" },
         ];
       default:
         return [];
@@ -265,51 +143,86 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
   const menuItems = getMenuItems();
 
+  const getRoleLabel = (r) =>
+    r?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Staff";
+
+  const getInitials = (name) =>
+    name
+      ?.split(" ")
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
+
   return (
-    <aside className={`dashboard-sidebar ${isOpen ? "open" : "closed"}`}>
-      <div className="sidebar-header">
-        <div className="sidebar-logo">
-          <img src={logo} alt="Methsara Publications" className="logo-image" />
+    <aside className={`dashboard-sidebar sidebar-modern ${isOpen ? "open" : "closed"}`}>
+
+      {/* ── Brand Header ── */}
+      <div className="sidebar-brand">
+        <div className="sidebar-brand-icon">
+          <BookOpen size={20} />
+        </div>
+        <div className="sidebar-brand-text">
+          <span className="sidebar-brand-name">Methsara</span>
+          <span className="sidebar-brand-sub">Publications</span>
         </div>
       </div>
 
-      <div className="sidebar-user">
-        <div className="user-avatar">{user?.name?.charAt(0) || "U"}</div>
-        <div className="user-info">
-          <p className="user-name">{user?.name || "User"}</p>
-          <p className="user-role">
-            {user?.role?.replace(/_/g, " ") || "Staff"}
-          </p>
+      {/* ── User Profile ── */}
+      <div className="sidebar-profile">
+        <div className="sidebar-avatar">
+          {getInitials(user?.name)}
+        </div>
+        <div className="sidebar-profile-info">
+          <p className="sidebar-profile-name">{user?.name || "User"}</p>
+          <p className="sidebar-profile-role">{getRoleLabel(role)}</p>
         </div>
       </div>
 
+      {/* ── Navigation ── */}
       <div className="sidebar-scroll-area">
         <nav className="sidebar-nav">
-          <div className="nav-group-label">Main Menu</div>
+          <span className="nav-section-label">Main Menu</span>
           {menuItems.map((item, index) => (
             <Link
               key={index}
               to={item.path}
-              className={`nav-item ${isActive(item.path) ? "active" : ""}`}
+              className={`nav-item ${isActive(item.path.split("?")[0]) ? "active" : ""}`}
               onClick={() => window.innerWidth < 1024 && toggleSidebar()}
             >
               <span className="nav-icon">{item.icon}</span>
-              <span className="nav-text" style={{ flex: 1 }}>
-                {item.label}
-              </span>
+              <span className="nav-label">{item.label}</span>
+              {item.badge && (
+                <span className={`nav-badge nav-badge-${item.badgeVariant}`}>
+                  {item.badge}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
       </div>
 
+      {/* ── Footer ── */}
       <div className="sidebar-footer">
-        <button className="nav-item logout-btn" onClick={logout}>
+        <button
+          className="sidebar-footer-btn theme-toggle-btn"
+          onClick={toggleTheme}
+          title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
           <span className="nav-icon">
-            <LogOut size={20} />
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </span>
-          <span className="nav-text">Logout</span>
+          <span className="nav-label">
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          </span>
+        </button>
+
+        <button className="sidebar-footer-btn sidebar-logout-btn" onClick={logout}>
+          <span className="nav-icon"><LogOut size={18} /></span>
+          <span className="nav-label">Logout</span>
         </button>
       </div>
+
     </aside>
   );
 };
