@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Inventory Controller
 // Epic: E5 - Inventory Management
 // Owner: IT24100264 (Bandara N W C D)
@@ -539,7 +539,7 @@ exports.getInventoryStats = async (req, res) => {
           item.product &&
           item.availableQuantity > 0 &&
           item.availableQuantity <=
-            (item.reorderPoint || item.lowStockThreshold),
+            (item.reorderPoint || item.lowStockThreshold || 10),
       ).length,
       outOfStock: filterLocation
         ? totalActiveProducts - itemsWithStockCount

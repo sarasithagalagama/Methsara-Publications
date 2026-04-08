@@ -58,6 +58,10 @@ const SupplierManagerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [supplierSearch, setSupplierSearch] = useState("");
 
+  // Action states
+  const [pendingPOs, setPendingPOs] = useState([]);
+  const [approvedPOs, setApprovedPOs] = useState([]);
+
   // Modal state
   const [showViewModal, setShowViewModal] = useState(false);
   const [showPOViewModal, setShowPOViewModal] = useState(false);
@@ -114,6 +118,11 @@ const SupplierManagerDashboard = () => {
           .length,
         activePOs,
       });
+
+      setPendingPOs(
+        allPOs.filter((po) => po.status === "Pending" || po.status === "Draft")
+      );
+      setApprovedPOs(allPOs.filter((po) => po.status === "Approved"));
 
       setSuppliers(allSuppliers);
       setPurchaseOrders(allPOs.slice(0, 10)); // [E4.3] Only the 10 most recent POs shown in dashboard table; full list is in PurchaseOrderList page
@@ -369,6 +378,73 @@ const SupplierManagerDashboard = () => {
         ]}
       />
 
+      {/* Action Required Priority Banner */}
+      {(pendingPOs.length > 0 || approvedPOs.length > 0) && (
+        <div className="dashboard-grid dashboard-grid-2" style={{ marginBottom: "1.5rem" }}>
+          {pendingPOs.length > 0 && (
+            <div
+              className="dashboard-card"
+              style={{
+                borderLeft: "4px solid var(--warning-color)",
+                padding: "1.25rem",
+                display: "flex",
+                flexDirection: "column",
+                marginBottom: 0
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--warning-color)" }}>
+                  <ClipboardList size={20} />
+                  <span style={{ fontWeight: 600, fontSize: "0.95rem" }}>Needs Approval</span>
+                </div>
+                <span className="badge warning" style={{ fontSize: "1.1rem" }}>{pendingPOs.length}</span>
+              </div>
+              <p className="text-muted text-sm" style={{ margin: "0 0 1rem 0" }}>Purchase orders waiting for manager approval</p>
+              <button 
+                className="btn btn-secondary" 
+                style={{ alignSelf: "flex-start", padding: "0.25rem 0.75rem", fontSize: "0.85rem" }}
+                onClick={() => {
+                  poSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                Review POs <ArrowRight size={14} style={{ marginLeft: "4px" }} />
+              </button>
+            </div>
+          )}
+
+          {approvedPOs.length > 0 && (
+            <div
+              className="dashboard-card"
+              style={{
+                borderLeft: "4px solid var(--success-color)",
+                padding: "1.25rem",
+                display: "flex",
+                flexDirection: "column",
+                marginBottom: 0
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--success-color)" }}>
+                  <PackageCheck size={20} />
+                  <span style={{ fontWeight: 600, fontSize: "0.95rem" }}>Delivery Verification</span>
+                </div>
+                <span className="badge success" style={{ fontSize: "1.1rem" }}>{approvedPOs.length}</span>
+              </div>
+              <p className="text-muted text-sm" style={{ margin: "0 0 1rem 0" }}>Approved POs awaiting delivery and verification</p>
+              <button 
+                className="btn btn-secondary" 
+                style={{ alignSelf: "flex-start", padding: "0.25rem 0.75rem", fontSize: "0.85rem" }}
+                onClick={() => {
+                  poSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                Verify Deliveries <ArrowRight size={14} style={{ marginLeft: "4px" }} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="dashboard-grid dashboard-grid-4">
         <StatCard
@@ -411,6 +487,67 @@ const SupplierManagerDashboard = () => {
           }
           subtitle="Orders in progress"
         />
+        </div>
+
+      {/* Quick Actions (E4.2 Shortcuts) */}
+      <div
+        className="dashboard-grid dashboard-grid-3"
+        style={{ marginBottom: "2rem" }}
+      >
+        <div className="dashboard-card action-card">
+          <div className="action-icon">
+            <FileText size={24} />
+          </div>
+          <h3 className="card-title">Create PO</h3>
+          <p className="text-sm text-muted" style={{ marginBottom: "1rem" }}>
+            Generate new PO for suppliers
+          </p>
+          <Link
+            to="/supplier-manager/purchase-orders/create"
+            className="action-link"
+            style={{ marginTop: "auto" }}
+          >
+            Create PO <ArrowRight size={16} />
+          </Link>
+        </div>
+        <div className="dashboard-card action-card">
+          <div
+            className="action-icon"
+            style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}
+          >
+            <ShoppingBag size={24} />
+          </div>
+          <h3 className="card-title">Sales Orders</h3>
+          <p className="text-sm text-muted" style={{ marginBottom: "1rem" }}>
+            Bulk distributor orders
+          </p>
+          <Link
+            to="/supplier-manager/sales-orders"
+            className="action-link"
+            style={{ marginTop: "auto" }}
+          >
+            View Sales <ArrowRight size={16} />
+          </Link>
+        </div>
+        <div className="dashboard-card action-card">
+          <div
+            className="action-icon"
+            style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}
+          >
+            <TrendingDown size={24} />
+          </div>
+          <h3 className="card-title">Debt Tracker</h3>
+          <p className="text-sm text-muted" style={{ marginBottom: "1rem" }}>
+            Payables & receivables
+          </p>
+          <Link
+            to="/supplier-manager/debt-tracker"
+            className="action-link"
+            style={{ marginTop: "auto" }}
+          >
+            Track Debts <ArrowRight size={16} />
+          </Link>
+        </div>
       </div>
 
       {/* ── Tabs ── */}
@@ -477,6 +614,24 @@ const SupplierManagerDashboard = () => {
                     <tr key={supplier._id}>
                       <td>
                         <strong>{supplier.name}</strong>
+                        {new Date() - new Date(supplier.createdAt) <
+                          7 * 24 * 60 * 60 * 1000 && (
+                          <span
+                            style={{
+                              marginLeft: "8px",
+                              padding: "2px 6px",
+                              background: "var(--success-color)",
+                              color: "#fff",
+                              borderRadius: "4px",
+                              fontSize: "0.65rem",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              verticalAlign: "middle",
+                            }}
+                          >
+                            New
+                          </span>
+                        )}
                         {supplier.businessRegistration && (
                           <div className="text-muted text-xs">
                             BR: {supplier.businessRegistration}
@@ -648,69 +803,6 @@ const SupplierManagerDashboard = () => {
               )}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="dashboard-grid dashboard-grid-3">
-        <div className="dashboard-card action-card">
-          <div className="action-icon">
-            <FileText size={24} />
-          </div>
-          <h3>Create Purchase Order</h3>
-          <p>Generate new PO for suppliers</p>
-          <Link
-            to="/supplier-manager/purchase-orders/create"
-            className="action-link"
-          >
-            Create PO <ArrowRight size={16} />
-          </Link>
-        </div>
-        <div className="dashboard-card action-card">
-          <div
-            className="action-icon"
-            style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}
-          >
-            <ShoppingBag size={24} />
-          </div>
-          <h3>Sales Orders</h3>
-          <p>Manage bulk orders from Distributors &amp; Bookshops</p>
-          <Link to="/supplier-manager/sales-orders" className="action-link">
-            View Sales Orders <ArrowRight size={16} />
-          </Link>
-        </div>
-        <div className="dashboard-card action-card">
-          <div
-            className="action-icon"
-            style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}
-          >
-            <TrendingDown size={24} />
-          </div>
-          <h3>Debt Tracker</h3>
-          <p>Monitor payables to Vendors and receivables from Customers</p>
-          <Link to="/supplier-manager/debt-tracker" className="action-link">
-            Track Debts <ArrowRight size={16} />
-          </Link>
-        </div>
-        <div className="dashboard-card action-card">
-          <div className="action-icon">
-            <BarChart2 size={24} />
-          </div>
-          <h3>Supplier Performance</h3>
-          <p>View delivery and quality metrics</p>
-          <Link to="/supplier-manager/performance" className="action-link">
-            View Metrics <ArrowRight size={16} />
-          </Link>
-        </div>
-        <div className="dashboard-card action-card">
-          <div className="action-icon">
-            <Calendar size={24} />
-          </div>
-          <h3>Delivery Schedule</h3>
-          <p>Upcoming deliveries calendar</p>
-          <Link to="/supplier-manager/schedule" className="action-link">
-            View Schedule <ArrowRight size={16} />
-          </Link>
         </div>
       </div>
 

@@ -18,6 +18,10 @@ import {
   XCircle,
   FileSignature,
   Bell,
+  Shield,
+  Activity,
+  MapPin,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "../../../epics/E1_UserAndRoleManagement/context/AuthContext";
 import toast from "react-hot-toast";
@@ -50,6 +54,7 @@ const AdminDashboard = () => {
     revenue: [],
     sales: { labels: [], data: [] },
   });
+
 
   // Modal State for Approvals
   // [Approval workflow] Managers submit change requests; the admin reviews and approves/rejects them here
@@ -112,9 +117,11 @@ const AdminDashboard = () => {
       const totalRevenue = allOrders
         .filter((order) => order.paymentStatus === "Paid")
         .reduce((sum, order) => sum + (order.total || 0), 0);
+      
+      // FIX: Use the 'total' field from the response instead of just the length of the paginated array
       const totalProducts =
         productsRes.status === "fulfilled"
-          ? productsRes.value.data.products?.length || 0
+          ? productsRes.value.data.total || productsRes.value.data.products?.length || 0
           : 0;
 
       setStats({
@@ -193,6 +200,8 @@ const AdminDashboard = () => {
       toast.error(error.response?.data?.message || "Failed to review request");
     }
   };
+
+
 
   const recentUserColumns = [
     { header: "Name", accessor: "name" },
@@ -369,6 +378,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
+
       {/* Pending Approvals Table — highest priority, above stats */}
       {pendingApprovals.length > 0 && (
         <div id="approvals-section">
@@ -384,7 +394,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Stats Grid */}
-      <div className="dashboard-grid compact-grid dashboard-grid-5">
+      <div className="dashboard-grid compact-grid dashboard-grid-4">
         <StatCard
           icon={<FileSignature size={24} />}
           label="Pending Approvals"
@@ -421,16 +431,53 @@ const AdminDashboard = () => {
           variant="primary"
           className="stat-card-compact"
         />
-        <StatCard
-          icon={<Bell size={24} />}
-          label="Low Stock Alerts"
-          value={stockAlerts.length}
-          change={stockAlerts.length > 0 ? "Action Required" : "All Clear"}
-          trend={stockAlerts.length > 0 ? "down" : "neutral"}
-          variant={stockAlerts.length > 0 ? "danger" : "primary"}
-          className="stat-card-compact"
-        />
       </div>
+
+      {/* ── Quick Priority Actions ── */}
+      <DashboardSection title="Critical Actions & Settings">
+        <div className="dashboard-grid dashboard-grid-4">
+          <div className="dashboard-card action-card">
+            <div className="action-icon" style={{ background: "rgba(37,99,235,0.1)", color: "#2563EB" }}>
+              <Users size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>Manage Users</h3>
+            <p style={{ fontSize: "0.85rem" }}>Add, edit, or remove system access</p>
+            <Link to="/admin/users" className="action-link">
+              Go To Users <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div className="dashboard-card action-card">
+            <div className="action-icon" style={{ background: "rgba(220,38,38,0.1)", color: "#DC2626" }}>
+              <Shield size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>Roles & System</h3>
+            <p style={{ fontSize: "0.85rem" }}>RBAC permissions overview</p>
+            <Link to="/admin/settings?tab=overview" className="action-link">
+              View Roles <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div className="dashboard-card action-card">
+            <div className="action-icon" style={{ background: "rgba(5,150,105,0.1)", color: "#059669" }}>
+              <MapPin size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>Locations</h3>
+            <p style={{ fontSize: "0.85rem" }}>Manage operating branches</p>
+            <Link to="/admin/settings?tab=locations" className="action-link">
+              Manage Locations <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div className="dashboard-card action-card">
+            <div className="action-icon" style={{ background: "rgba(2,132,199,0.1)", color: "#0284C7" }}>
+              <Activity size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>Security Logs</h3>
+            <p style={{ fontSize: "0.85rem" }}>Monitor user logins & activity</p>
+            <Link to="/admin/settings?tab=security" className="action-link">
+              View Audits <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </DashboardSection>
 
       {stockAlerts.length > 0 && (
         <div id="stock-alerts-section">
@@ -904,6 +951,9 @@ const AdminDashboard = () => {
             </Modal>
           );
         })()}
+
+
+
     </div>
   );
 };

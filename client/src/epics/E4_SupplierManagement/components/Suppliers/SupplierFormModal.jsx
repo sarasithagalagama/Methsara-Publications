@@ -537,19 +537,35 @@ const SupplierFormModal = ({ isOpen, onClose, onSave, initialData }) => {
           <div className="form-row">
             <div className="form-group half">
               <label>Bank Name</label>
-              <input
+              <select
                 name="bankDetails.bankName"
                 value={formData.bankDetails.bankName}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                placeholder="e.g. Bank of Ceylon"
                 className={
                   touched["bankDetails.bankName"] &&
                   errors["bankDetails.bankName"]
-                    ? "form-input is-invalid"
-                    : "form-input"
+                    ? "form-select is-invalid"
+                    : "form-select"
                 }
-              />
+              >
+                <option value="">Select Bank</option>
+                <option value="Bank of Ceylon">Bank of Ceylon (BOC)</option>
+                <option value="Commercial Bank">Commercial Bank</option>
+                <option value="People's Bank">People's Bank</option>
+                <option value="Hatton National Bank">Hatton National Bank (HNB)</option>
+                <option value="Sampath Bank">Sampath Bank</option>
+                <option value="Seylan Bank">Seylan Bank</option>
+                <option value="National Development Bank">National Development Bank (NDB)</option>
+                <option value="Nations Trust Bank">Nations Trust Bank (NTB)</option>
+                <option value="DFCC Bank">DFCC Bank</option>
+                <option value="Pan Asia Bank">Pan Asia Bank</option>
+                <option value="Union Bank">Union Bank</option>
+                <option value="Amana Bank">Amana Bank</option>
+                <option value="Standard Chartered Bank">Standard Chartered Bank</option>
+                <option value="HSBC">HSBC</option>
+                <option value="Other">Other Bank</option>
+              </select>
               {touched["bankDetails.bankName"] &&
                 errors["bankDetails.bankName"] && (
                   <span className="form-error">
@@ -565,6 +581,7 @@ const SupplierFormModal = ({ isOpen, onClose, onSave, initialData }) => {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 placeholder="e.g. Colombo Main"
+                list="branch-options"
                 className={
                   touched["bankDetails.branchName"] &&
                   errors["bankDetails.branchName"]
@@ -572,6 +589,29 @@ const SupplierFormModal = ({ isOpen, onClose, onSave, initialData }) => {
                     : "form-input"
                 }
               />
+              <datalist id="branch-options">
+                <option value="Colombo Main" />
+                <option value="Head Office" />
+                <option value="Corporate Branch" />
+                <option value="Nugegoda" />
+                <option value="Maharagama" />
+                <option value="Kandy" />
+                <option value="Galle" />
+                <option value="Matara" />
+                <option value="Kurunegala" />
+                <option value="Anuradhapura" />
+                <option value="Gampaha" />
+                <option value="Negombo" />
+                <option value="Panadura" />
+                <option value="Kiribathgoda" />
+                <option value="Wattala" />
+                <option value="Dehiwala" />
+                <option value="Wellawatte" />
+                <option value="Bambalapitiya" />
+                <option value="Kollupitiya" />
+                <option value="Borella" />
+                <option value="Pettah" />
+              </datalist>
               {touched["bankDetails.branchName"] &&
                 errors["bankDetails.branchName"] && (
                   <span className="form-error">

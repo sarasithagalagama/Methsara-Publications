@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Order Controller
 // Epic: E3 - Order & Transaction
 // Owner: IT24100191 (Jayasinghe D.B.P)
@@ -474,7 +474,8 @@ exports.getDashboardStats = async (req, res) => {
       {
         $match: {
           createdAt: { $gte: startOfWeek },
-          // status: { $ne: 'Cancelled' }
+          paymentStatus: "Paid",
+          orderStatus: { $ne: "Cancelled" },
         },
       },
       {

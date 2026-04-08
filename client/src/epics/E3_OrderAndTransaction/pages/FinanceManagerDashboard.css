@@ -24,7 +24,7 @@
 .action-card h3 {
   margin: 1rem 0 0.5rem;
   font-size: 1.25rem;
-  color: var(--brown-dark, #3d2b1f);
+  color: var(--text-primary);
 }
 
 .action-card p {
@@ -35,7 +35,7 @@
 
 .action-link {
   display: inline-block;
-  color: var(--gold-primary, #5D4037);
+  color: var(--primary-color);
   font-weight: 600;
   font-size: 0.95rem;
   transition: all 0.2s ease;

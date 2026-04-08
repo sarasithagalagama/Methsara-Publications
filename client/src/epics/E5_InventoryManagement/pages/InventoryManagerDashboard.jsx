@@ -28,6 +28,7 @@ import {
   Search,
   Truck,
   ShieldCheck,
+  ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import StatCard from "../../../components/dashboard/StatCard";
@@ -41,6 +42,7 @@ import {
   TextArea,
 } from "../../../components/common/Forms";
 import DashboardHeader from "../../../components/dashboard/DashboardHeader";
+import DashboardSection from "../../../components/dashboard/DashboardSection";
 import StockChart from "../../../components/dashboard/charts/StockChart";
 import StockAdjustmentModal from "../../../epics/E5_InventoryManagement/components/Inventory/StockAdjustmentModal";
 import "../../../components/dashboard/dashboard.css";
@@ -944,6 +946,157 @@ const InventoryManagerDashboard = () => {
         ]}
       />
 
+      {/* Priority Action Alerts — E5.9 */}
+      {(stats.lowStock > 0 ||
+        notDispatchedCount > 0 ||
+        soDispatchRequests.length > 0 ||
+        approvalRequests.length > 0) && (
+        <div
+          className="dashboard-grid dashboard-grid-3"
+          style={{ marginBottom: "1.5rem" }}
+        >
+          {stats.lowStock > 0 && (
+            <div
+              className="dashboard-card"
+              style={{
+                borderLeft: "4px solid var(--warning-color)",
+                padding: "1rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "var(--warning-color)",
+                    fontWeight: 600,
+                  }}
+                >
+                  <AlertTriangle size={18} /> LOW STOCK
+                </div>
+                <span className="badge warning">{stats.lowStock}</span>
+              </div>
+              <p className="text-secondary text-sm">
+                Items below reorder point at {selectedLocation}
+              </p>
+              <button
+                className="btn btn-secondary btn-sm"
+                style={{ alignSelf: "flex-start", marginTop: "4px" }}
+                onClick={() => {
+                  setActiveTab("inventory");
+                  setInventoryStatusFilter("Low Stock");
+                  document
+                    .getElementById("inventory-section")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                View Items <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
+
+          {(notDispatchedCount > 0 || soDispatchRequests.length > 0) && (
+            <div
+              className="dashboard-card"
+              style={{
+                borderLeft: "4px solid var(--accent-color)",
+                padding: "1rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "var(--accent-color)",
+                    fontWeight: 600,
+                  }}
+                >
+                  <Truck size={18} /> PENDING DISPATCH
+                </div>
+                <span className="badge info">
+                  {notDispatchedCount + soDispatchRequests.length}
+                </span>
+              </div>
+              <p className="text-secondary text-sm">
+                Orders awaiting fulfillment at {selectedLocation}
+              </p>
+              <button
+                className="btn btn-secondary btn-sm"
+                style={{ alignSelf: "flex-start", marginTop: "4px" }}
+                onClick={() => setActiveTab("dispatch")}
+              >
+                Fulfill Orders <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
+
+          {approvalRequests.length > 0 && (
+            <div
+              className="dashboard-card"
+              style={{
+                borderLeft: "4px solid var(--primary-color)",
+                padding: "1rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "var(--primary-color)",
+                    fontWeight: 600,
+                  }}
+                >
+                  <ShieldCheck size={18} /> PENDING APPROVALS
+                </div>
+                <span className="badge primary">{approvalRequests.length}</span>
+              </div>
+              <p className="text-secondary text-sm">
+                Inventory adjustments awaiting review
+              </p>
+              <button
+                className="btn btn-secondary btn-sm"
+                style={{ alignSelf: "flex-start", marginTop: "4px" }}
+                onClick={() => setActiveTab("approvals")}
+              >
+                Review All <ArrowRight size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Stats Grid — E5.1/E5.2/E5.9 */}
       <div
         className={`dashboard-grid ${availableLocations.length > 1 ? "dashboard-grid-main-side" : ""}`}
@@ -963,12 +1116,20 @@ const InventoryManagerDashboard = () => {
               label="Low Stock"
               value={stats.lowStock}
               variant="warning"
+              onClick={() => {
+                setActiveTab("inventory");
+                setInventoryStatusFilter("Low Stock");
+              }}
             />
             <StatCard
               icon={<XCircle size={24} />}
               label="Out of Stock"
               value={stats.outOfStock}
               variant="danger"
+              onClick={() => {
+                setActiveTab("inventory");
+                setInventoryStatusFilter("Out of Stock");
+              }}
             />
             {availableLocations.length > 1 && (
               <StatCard
@@ -976,15 +1137,6 @@ const InventoryManagerDashboard = () => {
                 label="Locations"
                 value={stats.locations}
                 variant="primary"
-              />
-            )}
-            {user?.role === "master_inventory_manager" && (
-              <StatCard
-                icon={<Clock size={24} />}
-                label="Not Dispatched"
-                value={notDispatchedCount}
-                variant="warning"
-                onClick={() => setActiveTab("dispatch")}
               />
             )}
           </div>
@@ -997,6 +1149,94 @@ const InventoryManagerDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* ── Quick Priority Actions ── */}
+      <DashboardSection title="Quick Actions">
+        <div className="dashboard-grid dashboard-grid-4">
+          <div
+            className="dashboard-card action-card"
+            onClick={() => setShowTransferModal(true)}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(37,99,235,0.1)", color: "#2563EB" }}
+            >
+              <RefreshCw size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Stock Transfer
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Request stock from warehouse</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              New Request <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => {
+              setActiveTab("inventory");
+              setSelectedItemForAdj(null);
+              setShowAdjustmentModal(true);
+            }}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(245,158,11,0.1)", color: "#F59E0B" }}
+            >
+              <Edit size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Stock Adjustment
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Log breakage, loss, or count</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Adjust Stock <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => setActiveTab("receive")}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}
+            >
+              <Package size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Receive Shipments
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Process incoming POs</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              View Pending <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => setActiveTab("dispatch")}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(220,38,38,0.1)", color: "#DC2626" }}
+            >
+              <Truck size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Dispatch Orders
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>
+              Fulfill outgoing sales & requests
+            </p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Process Queue <ChevronRight size={16} />
+            </div>
+          </div>
+        </div>
+      </DashboardSection>
 
       {/* Location Tabs + View Toggle */}
       <div className="dashboard-controls">

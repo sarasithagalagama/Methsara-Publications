@@ -27,10 +27,13 @@ import {
   AlertCircle,
   XCircle,
   ClipboardList,
+  ChevronRight,
+  CheckCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import StatCard from "../../../components/dashboard/StatCard";
 import DashboardHeader from "../../../components/dashboard/DashboardHeader";
+import DashboardSection from "../../../components/dashboard/DashboardSection";
 import RevenueChart from "../../../components/dashboard/charts/RevenueChart";
 import SalesChart from "../../../components/dashboard/charts/SalesChart";
 import "../../../components/dashboard/dashboard.css";
@@ -57,6 +60,7 @@ const FinanceManagerDashboard = () => {
     netIncome: 0,
     transactions: 0,
     pendingOrders: 0,
+    pendingBankTransfers: 0,
     growth: 0,
   });
 
@@ -276,9 +280,15 @@ const FinanceManagerDashboard = () => {
 
       // We still need to calculate pendingOrders if backend didn't provide it
       if (dashRes.status === "fulfilled") {
+        const pendingBankTransfers = allOrders.filter(
+          (o) =>
+            o.paymentMethod === "Bank Transfer" && o.paymentStatus === "Pending",
+        ).length;
         setStats((prev) => ({
           ...prev,
-          pendingOrders: allOrders.filter((o) => o.status === "Pending").length,
+          pendingOrders: allOrders.filter((o) => o.orderStatus === "Pending")
+            .length,
+          pendingBankTransfers,
         }));
       }
 
@@ -639,54 +649,146 @@ const FinanceManagerDashboard = () => {
         ]}
       />
 
-      {/* ── TAB NAVIGATION BAR ── */}
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          marginBottom: "20px",
-          borderBottom: "2px solid #e5e7eb",
-          paddingBottom: "0",
-        }}
-      >
-        {[
-          {
-            key: "payments",
-            label: "Payment Confirmation",
-            icon: <CreditCard size={15} />,
-          },
-          { key: "overview", label: "Overview", icon: <Activity size={15} /> },
-        ].map(({ key, label, icon }) => (
-          <button
-            key={key}
-            onClick={() => setActiveTab(key)}
+      {/* ── Operations section moved below stats if needed, or keeping it as navigation ── */}
+      <DashboardSection title="Finance Operations">
+        <div className="dashboard-grid dashboard-grid-4">
+          <div
+            className="dashboard-card action-card"
+            onClick={() => setShowTransactionModal(true)}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}
+            >
+              <DollarSign size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Record Entry
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>
+              Log a new financial transaction
+            </p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Add Record <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => setShowSalaryModal(true)}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(37,99,235,0.1)", color: "#2563EB" }}
+            >
+              <Users size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Payroll Mgmt
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>
+              Manage staff salaries & bonuses
+            </p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Open Payroll <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => navigate("/finance-manager/transactions")}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(245,158,11,0.1)", color: "#F59E0B" }}
+            >
+              <FileText size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Transactions
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>View full history & receipts</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              View All <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => {
+              setTempTaxConfig(taxConfig);
+              setShowTaxModal(true);
+            }}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(139,92,246,0.1)", color: "#8B5CF6" }}
+            >
+              <Settings size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Tax Config
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Update VAT & tax settings</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Configure <ChevronRight size={16} />
+            </div>
+          </div>
+        </div>
+      </DashboardSection>
+
+      {/* Urgent Alerts Strip */}
+      {stats.pendingBankTransfers > 0 && (
+        <div
+          className="finance-alert-strip"
+          style={{
+            display: "flex",
+            gap: "1rem",
+            padding: "0.75rem 1rem",
+            background: "rgba(37, 99, 235, 0.05)",
+            border: "1px solid rgba(37, 99, 235, 0.1)",
+            borderRadius: "var(--radius-md)",
+            marginBottom: "1.5rem",
+            alignItems: "center",
+          }}
+        >
+          <span
+            style={{
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              color: "var(--text-secondary)",
+            }}
+          >
+            Action Required:
+          </span>
+          <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "6px",
-              padding: "8px 18px",
-              border: "none",
-              borderBottom:
-                activeTab === key
-                  ? "2px solid #3b82f6"
-                  : "2px solid transparent",
-              background: "none",
-              color: activeTab === key ? "#3b82f6" : "#6b7280",
-              fontWeight: activeTab === key ? 600 : 400,
-              fontSize: "0.9rem",
+              gap: "0.5rem",
+              padding: "0.25rem 0.75rem",
+              background: "#eff6ff",
+              color: "#1d4ed8",
+              borderRadius: "20px",
+              fontSize: "0.8rem",
+              fontWeight: 500,
+              border: "1px solid #dbeafe",
               cursor: "pointer",
-              marginBottom: "-2px",
-              transition: "color 0.15s, border-color 0.15s",
             }}
+            onClick={() => setActiveTab("payments")}
           >
-            {icon}
-            {label}
-          </button>
-        ))}
-      </div>
+            <CreditCard size={14} />
+            {stats.pendingBankTransfers} bank transfers awaiting confirmation
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
-      <div className="dashboard-grid dashboard-grid-4">
+      <div
+        className="dashboard-grid dashboard-grid-4"
+        style={{ marginBottom: "2rem" }}
+      >
         <StatCard
           icon={<DollarSign size={24} />}
           label="Total Revenue"
@@ -711,6 +813,67 @@ const FinanceManagerDashboard = () => {
           value={`+${stats.growth}%`}
           variant="warning"
         />
+      </div>
+
+      {/* ── TAB NAVIGATION BAR ── */}
+      <div
+        style={{
+          display: "flex",
+          gap: "8px",
+          marginBottom: "20px",
+          borderBottom: "2px solid #e5e7eb",
+          paddingBottom: "0",
+        }}
+      >
+        {[
+          {
+            key: "payments",
+            label: "Payment Confirmation",
+            icon: <CreditCard size={15} />,
+            count: stats.pendingBankTransfers,
+          },
+          { key: "overview", label: "Overview", icon: <Activity size={15} /> },
+        ].map(({ key, label, icon, count }) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 18px",
+              border: "none",
+              borderBottom:
+                activeTab === key
+                  ? "2px solid #3b82f6"
+                  : "2px solid transparent",
+              background: "none",
+              color: activeTab === key ? "#3b82f6" : "#6b7280",
+              fontWeight: activeTab === key ? 600 : 400,
+              fontSize: "0.9rem",
+              cursor: "pointer",
+              marginBottom: "-2px",
+              transition: "color 0.15s, border-color 0.15s",
+            }}
+          >
+            {icon}
+            {label}
+            {count > 0 && (
+              <span
+                style={{
+                  background: key === "payments" ? "#3b82f6" : "#ef4444",
+                  color: "#fff",
+                  fontSize: "0.7rem",
+                  padding: "0.1rem 0.4rem",
+                  borderRadius: "10px",
+                  marginLeft: "4px",
+                }}
+              >
+                {count}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* ── PAYMENTS CONFIRMATION TAB ── */}
@@ -1063,181 +1226,77 @@ const FinanceManagerDashboard = () => {
         title="Tax Configuration"
         size="md"
       >
-        <div
-          style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}
-        >
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           {/* Header info */}
-          <div
-            style={{
-              background: "#eff6ff",
-              border: "1px solid #bfdbfe",
-              borderRadius: "8px",
-              padding: "0.85rem 1rem",
-              fontSize: "0.875rem",
-              color: "#1e40af",
-            }}
-          >
-            Tax settings are stored locally and applied to all future manual
-            invoice calculations.
-          </div>
-
-          {/* Tax identity */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "1rem",
-            }}
-          >
-            <Input
-              label="Tax Name"
-              type="text"
-              placeholder="e.g. VAT, GST"
-              value={tempTaxConfig.taxName}
-              onChange={(e) =>
-                setTempTaxConfig((p) => ({ ...p, taxName: e.target.value }))
-              }
-            />
-            <Input
-              label="Tax Registration Number (optional)"
-              type="text"
-              placeholder="e.g. VAT-123456"
-              value={tempTaxConfig.taxNumber}
-              onChange={(e) =>
-                setTempTaxConfig((p) => ({ ...p, taxNumber: e.target.value }))
-              }
-            />
-          </div>
-
-          {/* Rate */}
-          <Input
-            label="Default Tax Rate (%)"
-            type="number"
-            min="0"
-            max="100"
-            step="0.1"
-            value={tempTaxConfig.vatRate}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v !== "" && (parseFloat(v) < 0 || parseFloat(v) > 100))
-                return;
-              setTempTaxConfig((p) => ({ ...p, vatRate: v }));
-            }}
-            helperText={`Tax amount on Rs. 10,000 → Rs. ${((10000 * (parseFloat(tempTaxConfig.vatRate) || 0)) / 100).toLocaleString()}`}
-          />
-
-          {/* Apply-to toggles */}
-          <div>
-            <p
-              style={{
-                fontWeight: "600",
-                fontSize: "0.875rem",
-                marginBottom: "0.6rem",
-                color: "#374151",
-              }}
-            >
-              Apply Tax To
-            </p>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-              }}
-            >
-              {[
-                { key: "applyToInvoices", label: "Customer Invoices" },
-                { key: "applyToSalaries", label: "Salary Transactions" },
-                { key: "applyToSupplierPayments", label: "Supplier Payments" },
-              ].map(({ key, label }) => (
-                <label
-                  key={key}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.6rem",
-                    cursor: "pointer",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={tempTaxConfig[key]}
-                    onChange={(e) =>
-                      setTempTaxConfig((p) => ({
-                        ...p,
-                        [key]: e.target.checked,
-                      }))
-                    }
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      accentColor: "#3b82f6",
-                    }}
-                  />
-                  {label}
-                </label>
-              ))}
+          <div style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: "12px", padding: "1rem", fontSize: "0.85rem", color: "var(--primary-color)", display: "flex", alignItems: "flex-start", gap: "10px" }}>
+            <Settings size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
+            <div>
+              <strong style={{ display: "block", marginBottom: "4px" }}>Local Tax Settings</strong>
+              Tax settings are stored locally and instantly applied to all future manual invoice calculations.
             </div>
           </div>
 
-          {/* Preview */}
-          <div
-            style={{
-              background: "#f9fafb",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              padding: "0.85rem 1rem",
-            }}
-          >
-            <p
-              style={{
-                fontWeight: "600",
-                fontSize: "0.875rem",
-                marginBottom: "0.5rem",
-              }}
-            >
-              Current Configuration Preview
-            </p>
-            <div
-              style={{
-                fontSize: "0.85rem",
-                color: "#4b5563",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.25rem",
-              }}
-            >
-              <span>
-                <strong>Tax Name:</strong> {tempTaxConfig.taxName || "—"}
-              </span>
-              <span>
-                <strong>Rate:</strong> {tempTaxConfig.vatRate}%
-              </span>
-              <span>
-                <strong>Reg. No.:</strong>{" "}
-                {tempTaxConfig.taxNumber || "Not set"}
-              </span>
-              <span>
-                <strong>Applied to:</strong>{" "}
+          <div style={{ padding: "0 4px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem", marginBottom: "1.5rem" }}>
+              <Input
+                label="Tax Name"
+                type="text"
+                placeholder="e.g. VAT, GST"
+                value={tempTaxConfig.taxName}
+                onChange={(e) => setTempTaxConfig((p) => ({ ...p, taxName: e.target.value })) }
+              />
+              <Input
+                label="Reg. Number (Optional)"
+                type="text"
+                placeholder="e.g. VAT-123456"
+                value={tempTaxConfig.taxNumber}
+                onChange={(e) => setTempTaxConfig((p) => ({ ...p, taxNumber: e.target.value })) }
+              />
+            </div>
+
+            {/* Rate */}
+            <div style={{ marginBottom: "1.5rem" }}>
+              <Input
+                label="Default Tax Rate (%)"
+                type="number"
+                min="0" max="100" step="0.1"
+                value={tempTaxConfig.vatRate}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v !== "" && (parseFloat(v) < 0 || parseFloat(v) > 100)) return;
+                  setTempTaxConfig((p) => ({ ...p, vatRate: v }));
+                }}
+                helperText={`Example: Tax on Rs. 10,000 → Rs. ${((10000 * (parseFloat(tempTaxConfig.vatRate) || 0)) / 100).toLocaleString()}`}
+              />
+            </div>
+
+            {/* Apply-to toggles */}
+            <div style={{ background: "var(--bg-color)", borderRadius: "12px", border: "1px solid var(--border-color)", padding: "1.25rem" }}>
+              <p style={{ fontWeight: "600", fontSize: "0.9rem", marginBottom: "1rem", color: "var(--text-color)" }}>
+                Apply Tax To:
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                 {[
-                  tempTaxConfig.applyToInvoices && "Invoices",
-                  tempTaxConfig.applyToSalaries && "Salaries",
-                  tempTaxConfig.applyToSupplierPayments && "Supplier Payments",
-                ]
-                  .filter(Boolean)
-                  .join(", ") || "None"}
-              </span>
+                  { key: "applyToInvoices", label: "Customer Invoices" },
+                  { key: "applyToSalaries", label: "Salary Transactions" },
+                  { key: "applyToSupplierPayments", label: "Supplier Payments" },
+                ].map(({ key, label }) => (
+                  <label key={key} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                    <input
+                      type="checkbox"
+                      checked={tempTaxConfig[key]}
+                      onChange={(e) => setTempTaxConfig((p) => ({ ...p, [key]: e.target.checked }))}
+                      style={{ width: "18px", height: "18px", accentColor: "var(--primary-color)", borderRadius: "4px" }}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "0.75rem",
-              justifyContent: "flex-end",
-            }}
-          >
+          {/* Footer Actions */}
+          <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
             <Button variant="outline" onClick={() => setShowTaxModal(false)}>
               Cancel
             </Button>
@@ -1255,133 +1314,105 @@ const FinanceManagerDashboard = () => {
         title="Staff Salary & Bonus Management"
         className="modal-xl"
       >
-        <div className="salary-management">
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Staff Member</th>
-                  <th>Role</th>
-                  <th>Base Salary (Rs.)</th>
-                  <th>Status</th>
-                  <th>Bonus (Rs.)</th>
-                  <th style={{ textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {staff.map((member) => {
-                  const isPaidThisMonth = allFinancialTransactions.some((t) => {
-                    if (t.type !== "Salary") return false;
-                    const tid = t.relatedId?._id || t.relatedId;
-                    if (tid !== member._id) return false;
-                    const transDate = new Date(t.date || t.createdAt);
-                    const now = new Date();
-                    return (
-                      transDate.getMonth() === now.getMonth() &&
-                      transDate.getFullYear() === now.getFullYear()
-                    );
-                  });
+        <div style={{ padding: "8px 4px", maxHeight: "65vh", overflowY: "auto" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {staff.filter((m) => m.role?.toLowerCase() !== "admin" && m.name !== "Admin User").length === 0 && (
+              <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>
+                No staff members found.
+              </div>
+            )}
+            {staff.filter((m) => m.role?.toLowerCase() !== "admin" && m.name !== "Admin User").map((member) => {
+              const isPaidThisMonth = allFinancialTransactions.some((t) => {
+                if (t.type !== "Salary") return false;
+                const tid = t.relatedId?._id || t.relatedId;
+                if (tid !== member._id) return false;
+                const transDate = new Date(t.date || t.createdAt);
+                const now = new Date();
+                return (
+                  transDate.getMonth() === now.getMonth() &&
+                  transDate.getFullYear() === now.getFullYear()
+                );
+              });
 
-                  return (
-                    <tr key={member._id}>
-                      <td>
-                        <div className="user-info">
-                          <div
-                            className="user-avatar"
-                            style={{
-                              backgroundColor: "#f3e8ff",
-                              color: "#6b21a8",
-                            }}
-                          >
-                            {member.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="user-name">{member.name}</div>
-                            <div className="user-subtitle">{member.email}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <span className="status-badge info">
-                          {member.role.replace(/_/g, " ")}
-                        </span>
-                      </td>
-                      <td>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "0.5rem",
-                            alignItems: "center",
-                          }}
-                        >
-                          <input
-                            type="number"
-                            className="form-input form-input-sm"
-                            style={{ width: "100px" }}
-                            min="0"
-                            step="1"
-                            value={salaryInputs[member._id] || ""}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              // Prevent negative values from being entered
-                              if (val !== "" && parseFloat(val) < 0) return;
-                              setSalaryInputs({
-                                ...salaryInputs,
-                                [member._id]: val,
-                              });
-                            }}
-                          />
-                          <button
-                            className="btn-icon"
-                            title="Update Base Salary"
-                            onClick={() => handleUpdateStaffSalary(member._id)}
-                          >
-                            <Settings size={14} />
-                          </button>
-                        </div>
-                      </td>
-                      <td>
-                        {isPaidThisMonth ? (
-                          <span className="status-badge success">
-                            Paid (This Month)
-                          </span>
-                        ) : (
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => handlePaySalary(member._id)}
-                          >
-                            Pay Salary
-                          </button>
-                        )}
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          className="form-input form-input-sm"
-                          style={{ width: "100px" }}
-                          placeholder="Amount..."
-                          value={bonusInputs[member._id] || ""}
-                          onChange={(e) =>
-                            setBonusInputs({
-                              ...bonusInputs,
-                              [member._id]: e.target.value,
-                            })
-                          }
-                        />
-                      </td>
-                      <td style={{ textAlign: "right" }}>
-                        <button
-                          className="btn btn-primary btn-sm"
-                          onClick={() => handlePayBonus(member._id)}
-                        >
-                          Send Bonus
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+              return (
+                <div key={member._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: "var(--card-bg)", borderRadius: "12px", border: "1px solid var(--border-color)", gap: "1.5rem", transition: "border-color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--primary-color)"} onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--border-color)"}>
+                  
+                  {/* Info */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: "1.5", minWidth: "180px" }}>
+                    <div style={{ width: "42px", height: "42px", borderRadius: "12px", backgroundColor: "rgba(59,130,246,0.15)", color: "#3B82F6", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "600", fontSize: "1.2rem" }}>
+                      {member.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: "600", color: "var(--text-color)", fontSize: "0.95rem", marginBottom: "2px" }}>{member.name}</div>
+                      <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{member.email}</div>
+                    </div>
+                  </div>
+
+                  {/* Role */}
+                  <div style={{ flex: "1", minWidth: "120px" }}>
+                    <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: "6px", background: "var(--bg-color)", border: "1px solid var(--border-color)", color: "var(--text-secondary)", fontSize: "0.8rem", fontWeight: "500", letterSpacing: "0.3px" }}>
+                      {member.role.replace(/_/g, " ")}
+                    </span>
+                  </div>
+
+                  {/* Salary section */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: "1.2", minWidth: "150px" }}>
+                    <div style={{ position: "relative" }}>
+                      <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)", fontSize: "0.85rem", pointerEvents: "none", fontWeight: "500" }}>Rs.</span>
+                      <input
+                        type="number"
+                        style={{ width: "115px", paddingLeft: "32px", paddingRight: "8px", height: "36px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", color: "var(--text-color)", outline: "none", fontSize: "0.9rem", transition: "all 0.2s", fontWeight: "500" }}
+                        placeholder="0"
+                        min="0" step="1"
+                        value={salaryInputs[member._id] || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val !== "" && parseFloat(val) < 0) return;
+                          setSalaryInputs({ ...salaryInputs, [member._id]: val });
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = "var(--primary-color)"}
+                        onBlur={(e) => e.target.style.borderColor = "var(--border-color)"}
+                      />
+                    </div>
+                    <button title="Update Base Salary" className="btn-icon" onClick={() => handleUpdateStaffSalary(member._id)} style={{ width: "36px", height: "36px", border: "1px solid var(--border-color)", borderRadius: "8px", background: "var(--bg-color)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-secondary)", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.color = "var(--primary-color)"; e.currentTarget.style.borderColor = "var(--primary-color)"; }} onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--border-color)"; }}>
+                      <Settings size={16} />
+                    </button>
+                  </div>
+
+                  {/* Salary Action section */}
+                  <div style={{ flex: "1", minWidth: "130px" }}>
+                    {isPaidThisMonth ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "var(--success-color)", fontSize: "0.85rem", fontWeight: "600", padding: "6px 0" }}>
+                        <CheckCircle size={16} /> Paid This Month
+                      </span>
+                    ) : (
+                      <button style={{ height: "36px", padding: "0 16px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "600", border: "1px solid var(--primary-color)", color: "var(--primary-color)", background: "transparent", cursor: "pointer", transition: "all 0.2s" }} onClick={() => handlePaySalary(member._id)} onMouseOver={(e) => { e.currentTarget.style.background = "var(--primary-color)"; e.currentTarget.style.color = "white"; }} onMouseOut={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--primary-color)"; }}>
+                        Pay Salary
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Bonus Action section */}
+                  <div style={{ flex: "1.5", display: "flex", alignItems: "center", gap: "8px", justifyContent: "flex-end", minWidth: "180px" }}>
+                    <div style={{ position: "relative" }}>
+                      <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)", fontSize: "0.85rem", pointerEvents: "none", fontWeight: "500" }}>Rs.</span>
+                      <input
+                        type="number"
+                        style={{ width: "105px", paddingLeft: "32px", paddingRight: "8px", height: "36px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", color: "var(--text-color)", outline: "none", fontSize: "0.9rem", transition: "all 0.2s", fontWeight: "500" }}
+                        placeholder="Bonus"
+                        value={bonusInputs[member._id] || ""}
+                        onChange={(e) => setBonusInputs({ ...bonusInputs, [member._id]: e.target.value })}
+                        onFocus={(e) => e.target.style.borderColor = "var(--primary-color)"}
+                        onBlur={(e) => e.target.style.borderColor = "var(--border-color)"}
+                      />
+                    </div>
+                    <button style={{ height: "36px", padding: "0 16px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "600", border: "none", background: "var(--primary-color)", color: "white", cursor: "pointer", transition: "opacity 0.2s" }} onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"} onMouseOut={(e) => e.currentTarget.style.opacity = "1"} onClick={() => handlePayBonus(member._id)}>
+                      Send
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </Modal>
@@ -1436,85 +1467,55 @@ const FinanceManagerDashboard = () => {
                     No vendor payable records.
                   </p>
                 ) : (
-                  <div className="table-container">
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>Vendor</th>
-                          <th>Outstanding (We Owe)</th>
-                          <th>Terms</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {vendors.map((supplier) => (
-                          <tr key={supplier._id}>
-                            <td>
-                              <strong>{supplier.name}</strong>
-                              <div
-                                style={{ fontSize: "0.8rem", color: "#666" }}
-                              >
-                                {supplier.contactPerson}
-                              </div>
-                              <span
-                                style={{
-                                  fontSize: "0.75rem",
-                                  padding: "1px 6px",
-                                  borderRadius: "4px",
-                                  background: "rgba(239,68,68,0.1)",
-                                  color: "#ef4444",
-                                }}
-                              >
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "1rem", maxHeight: "60vh", overflowY: "auto", paddingRight: "4px" }}>
+                    {vendors.map((supplier) => (
+                      <div key={supplier._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: "var(--card-bg)", borderRadius: "12px", border: "1px solid var(--border-color)", gap: "1.5rem", transition: "border-color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--primary-color)"} onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--border-color)"}>
+                        
+                        {/* Info */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: "1.5", minWidth: "200px" }}>
+                          <div style={{ width: "42px", height: "42px", borderRadius: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "var(--danger-color)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "600", fontSize: "1.2rem" }}>
+                            {supplier.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: "600", color: "var(--text-color)", fontSize: "0.95rem", marginBottom: "2px", display: "flex", alignItems: "center", gap: "8px" }}>
+                              {supplier.name}
+                              <span style={{ fontSize: "0.7rem", padding: "2px 6px", borderRadius: "4px", background: "rgba(239,68,68,0.1)", color: "var(--danger-color)", letterSpacing: "0.3px", fontWeight: "600" }}>
                                 {supplier.category}
                               </span>
-                            </td>
-                            <td
-                              style={{ color: "#ef4444", fontWeight: "bold" }}
-                            >
-                              Rs.{" "}
-                              {(
-                                supplier.outstandingBalance || 0
-                              ).toLocaleString()}
-                            </td>
-                            <td>{supplier.paymentTerms}</td>
-                            <td>
-                              <div style={{ display: "flex", gap: "0.5rem" }}>
-                                <input
-                                  type="number"
-                                  placeholder="Amount"
-                                  value={settleInputs[supplier._id] || ""}
-                                  onChange={(e) =>
-                                    setSettleInputs({
-                                      ...settleInputs,
-                                      [supplier._id]: e.target.value,
-                                    })
-                                  }
-                                  className="form-input form-input-sm"
-                                  style={{ width: "110px" }}
-                                />
-                                <button
-                                  className="btn btn-sm"
-                                  style={{
-                                    background: "#ef4444",
-                                    color: "white",
-                                    border: "none",
-                                    borderRadius: "6px",
-                                    padding: "0.35rem 0.75rem",
-                                    cursor: "pointer",
-                                    fontWeight: 600,
-                                  }}
-                                  onClick={() =>
-                                    handleSettleSupplier(supplier._id)
-                                  }
-                                >
-                                  Pay Vendor
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </div>
+                            <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{supplier.contactPerson} • {supplier.paymentTerms} terms</div>
+                          </div>
+                        </div>
+
+                        {/* Outstanding */}
+                        <div style={{ flex: "1", minWidth: "140px" }}>
+                          <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.5px" }}>Outstanding</div>
+                          <div style={{ color: "var(--danger-color)", fontWeight: "700", fontSize: "1.05rem" }}>
+                            Rs. {(supplier.outstandingBalance || 0).toLocaleString()}
+                          </div>
+                        </div>
+
+                        {/* Settle Action */}
+                        <div style={{ flex: "1.2", display: "flex", alignItems: "center", gap: "8px", justifyContent: "flex-end", minWidth: "200px" }}>
+                          <div style={{ position: "relative" }}>
+                            <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)", fontSize: "0.85rem", pointerEvents: "none", fontWeight: "500" }}>Rs.</span>
+                            <input
+                              type="number"
+                              style={{ width: "115px", paddingLeft: "32px", paddingRight: "8px", height: "36px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", color: "var(--text-color)", outline: "none", fontSize: "0.9rem", transition: "all 0.2s", fontWeight: "500" }}
+                              placeholder="Amount"
+                              min="0" step="1"
+                              value={settleInputs[supplier._id] || ""}
+                              onChange={(e) => setSettleInputs({ ...settleInputs, [supplier._id]: e.target.value })}
+                              onFocus={(e) => e.target.style.borderColor = "var(--primary-color)"}
+                              onBlur={(e) => e.target.style.borderColor = "var(--border-color)"}
+                            />
+                          </div>
+                          <button style={{ height: "36px", padding: "0 16px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "600", border: "none", background: "var(--danger-color)", color: "white", cursor: "pointer", transition: "opacity 0.2s" }} onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"} onMouseOut={(e) => e.currentTarget.style.opacity = "1"} onClick={() => handleSettleSupplier(supplier._id)}>
+                            Pay Vendor
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

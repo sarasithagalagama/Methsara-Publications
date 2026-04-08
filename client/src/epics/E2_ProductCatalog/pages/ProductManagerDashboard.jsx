@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 import StatCard from "../../../components/dashboard/StatCard";
+import DashboardSection from "../../../components/dashboard/DashboardSection";
 import Modal from "../../../components/common/Modal";
 import DashboardHeader from "../../../components/dashboard/DashboardHeader";
 import SalesChart from "../../../components/dashboard/charts/SalesChart";
@@ -42,10 +43,12 @@ const ProductManagerDashboard = () => {
   // [E2.1] Dashboard stats: totalProducts, archivedProducts, avgRating fetched on mount
   // State Variables
   const [stats, setStats] = useState({
+    totalProducts: 0,
     avgRating: 0,
     archivedProducts: 0,
   });
   const [products, setProducts] = useState([]);
+  const [reviews, setReviews] = useState([]);
 
   const [activeTab, setActiveTab] = useState("products");
   const [showArchived, setShowArchived] = useState(false);
@@ -97,6 +100,8 @@ const ProductManagerDashboard = () => {
     description: "",
     price: "",
     subject: "",
+    isOtherSubject: false,
+    otherSubject: "",
     category: "Grade 6",
     image: "",
     backCoverImage: "",
@@ -116,6 +121,7 @@ const ProductManagerDashboard = () => {
     fetchDashboardData();
     fetchCategories();
     fetchSuppliers();
+    fetchReviews();
   }, []);
 
   const [suppliers, setSuppliers] = useState([]);
@@ -307,6 +313,20 @@ const ProductManagerDashboard = () => {
     }
   };
 
+  const fetchReviews = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("/api/reviews", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setReviews(res.data.reviews || []);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  };
+
+  const handleDeleteReview = null; // No need for delete feature as requested
+
   // Reset to page 1 whenever filters/tab change
   useEffect(() => {
     setCurrentPage(1);
@@ -391,18 +411,22 @@ const ProductManagerDashboard = () => {
   };
 
   const handleInputChange = (e) => {
-    let { name, value, type, checked } = e.target;
+    const { name, value, type, checked } = e.target;
+    const val = type === "checkbox" ? checked : value;
 
-    // Strict filtering for Author Name: only letters, spaces, dots, and commas
-    if (name === "author" && type !== "checkbox") {
-      value = value.replace(/[^a-zA-Z\s.,]/g, "");
+    if (name === "subject") {
+      setFormData((prev) => ({
+        ...prev,
+        subject: val,
+        isOtherSubject: val === "Other",
+        otherSubject: val === "Other" ? prev.otherSubject : "",
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: val }));
     }
 
-    const newValue = type === "checkbox" ? checked : value;
-    setFormData((prev) => ({ ...prev, [name]: newValue }));
-
     // Instant real-time validation for a "premium" feel
-    const err = type === "checkbox" ? null : validateField(name, newValue);
+    const err = type === "checkbox" ? null : validateField(name, val);
     setFormErrors((prev) => ({ ...prev, [name]: err }));
   };
 
@@ -493,6 +517,8 @@ const ProductManagerDashboard = () => {
       isbn: "",
       pageCount: 0,
       displayOrder: 0,
+      isOtherSubject: false,
+      otherSubject: "",
     });
     // Set all fields as 'null' to enable real-time validation tracking
     const initialErrors = {};
@@ -512,16 +538,30 @@ const ProductManagerDashboard = () => {
     setShowProductModal(true);
   };
 
-  const handleEditClick = (product) => {
-    setIsEditing(true);
-    setCurrentProduct(product);
+  const setFormDataFromProduct = (product) => {
+    const predefinedSubjects = [
+      "Biology",
+      "Mathematics",
+      "Science",
+      "History",
+      "Geography",
+      "Buddhism",
+      "Health & PE",
+      "Life Skills",
+      "Tech Skills",
+    ];
+    const isOther =
+      product.subject && !predefinedSubjects.includes(product.subject);
+
     setFormData({
       title: product.title,
       titleSinhala: product.titleSinhala || "",
       author: product.author || "",
       description: product.description,
       price: product.price,
-      subject: product.subject || "",
+      subject: isOther ? "Other" : product.subject || "",
+      isOtherSubject: isOther,
+      otherSubject: isOther ? product.subject : "",
       category: product.category || "Grade 6",
       image: product.image || "",
       backCoverImage: product.backCoverImage || "",
@@ -530,6 +570,12 @@ const ProductManagerDashboard = () => {
       pageCount: product.pageCount || 0,
       displayOrder: product.displayOrder || 0,
     });
+  };
+
+  const handleEditClick = (product) => {
+    setIsEditing(true);
+    setCurrentProduct(product);
+    setFormDataFromProduct(product);
 
     // Run initial validation on edit to show current state
     const initialErrors = {};
@@ -561,9 +607,14 @@ const ProductManagerDashboard = () => {
       const token = localStorage.getItem("token");
       const config = { headers: { Authorization: `Bearer ${token}` } };
 
-      const submissionData = { ...formData };
+    const submissionData = { ...formData };
 
-      // Map simplified category to backend grade/examType
+    // Handle "Other" subject
+    if (submissionData.isOtherSubject) {
+      submissionData.subject = submissionData.otherSubject;
+    }
+
+    // Map simplified category to backend grade/examType
       if (submissionData.category === "A/L") {
         submissionData.grade = "Grade 12";
         submissionData.examType = "A/L";
@@ -668,28 +719,118 @@ const ProductManagerDashboard = () => {
         ]}
       />
 
+
+
       {/* Stats Grid */}
-      <div className="dashboard-grid dashboard-grid-3">
+      <div
+        className="dashboard-grid dashboard-grid-3"
+        style={{ marginBottom: "2rem" }}
+      >
         <StatCard
           icon={<Package size={24} />}
-          label="Catalog Items"
+          label="Total Books"
           value={stats.totalProducts}
           variant="primary"
         />
         <StatCard
           icon={<Archive size={24} />}
-          label="Archived Items"
+          label="Archived"
           value={stats.archivedProducts}
           variant="warning"
           onClick={() => setActiveTab("archived")}
         />
         <StatCard
           icon={<Star size={24} />}
-          label="Avg Rating"
+          label="Store Rating"
           value={stats.avgRating}
           variant="success"
         />
       </div>
+
+      {/* ── Quick Priority Actions ── */}
+      <DashboardSection title="Operations">
+        <div className="dashboard-grid dashboard-grid-4">
+          <div
+            className="dashboard-card action-card"
+            onClick={handleAddClick}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}
+            >
+              <Plus size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Add Product
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Create a new book listing</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Create <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => setActiveTab("categories")}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(37,99,235,0.1)", color: "#2563EB" }}
+            >
+              <Tags size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Categories
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Manage grades & subjects</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              View Categories <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => setActiveTab("archived")}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(245,158,11,0.1)", color: "#F59E0B" }}
+            >
+              <Archive size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Archived
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Restore or view old books</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              View Archive <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => {
+              setActiveTab("reviews");
+              fetchReviews();
+            }}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(220,38,38,0.1)", color: "#DC2626" }}
+            >
+              <Star size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Ratings
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>View customer reviews</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Check Feedback <ChevronRight size={16} />
+            </div>
+          </div>
+        </div>
+      </DashboardSection>
 
       {/* Tabs */}
       <div className="dashboard-tabs">
@@ -710,6 +851,12 @@ const ProductManagerDashboard = () => {
           onClick={() => setActiveTab("archived")}
         >
           Archived Items
+        </button>
+        <button
+          className={`tab-btn ${activeTab === "reviews" ? "active" : ""}`}
+          onClick={() => setActiveTab("reviews")}
+        >
+          User Reviews
         </button>
       </div>
 
@@ -983,6 +1130,59 @@ const ProductManagerDashboard = () => {
             </div>
           </>
         )}
+        {activeTab === "reviews" && (
+          <>
+            <div className="dashboard-card-header">
+              <h2 className="card-title">Customer Feedback</h2>
+            </div>
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>User</th>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reviews.map((r) => (
+                    <tr key={r._id}>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{r.product?.title || "Unknown Book"}</div>
+                        <div className="text-muted text-xs">ISBN: {r.product?.isbn}</div>
+                      </td>
+                      <td>
+                        <div>{r.user?.name}</div>
+                        <div className="text-muted text-xs">{r.user?.email}</div>
+                      </td>
+                      <td>
+                        <div className="pd2-stars" style={{ display: "flex", gap: "2px" }}>
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              size={12}
+                              fill={i < r.rating ? "#f59e0b" : "none"}
+                              stroke={i < r.rating ? "#f59e0b" : "#d1d5db"}
+                            />
+                          ))}
+                        </div>
+                      </td>
+                      <td style={{ maxWidth: "300px" }}>
+                        <p className="text-sm" style={{ whiteSpace: "normal" }}>{r.comment}</p>
+                      </td>
+                      <td>{new Date(r.createdAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {reviews.length === 0 && (
+                <div className="table-empty-state">No reviews yet.</div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <Modal
@@ -1215,8 +1415,7 @@ const ProductManagerDashboard = () => {
                   Subject
                   <span className="req-star">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   name="subject"
                   value={formData.subject}
                   onChange={handleInputChange}
@@ -1224,16 +1423,54 @@ const ProductManagerDashboard = () => {
                   className={
                     formErrors.subject
                       ? "error-input"
-                      : formData.subject.trim()
+                      : formData.subject?.trim()
                         ? "success-input"
                         : ""
                   }
-                  placeholder="e.g., Science, Mathematics"
-                />
+                >
+                  <option value="">Select a Subject</option>
+                  <option value="Biology">Biology</option>
+                  <option value="Mathematics">Mathematics</option>
+                  <option value="Science">Science</option>
+                  <option value="History">History</option>
+                  <option value="Geography">Geography</option>
+                  <option value="Buddhism">Buddhism</option>
+                  <option value="Health & PE">Health & PE</option>
+                  <option value="Life Skills">Life Skills</option>
+                  <option value="Tech Skills">Tech Skills</option>
+                  <option value="Other">Other (Custom)</option>
+                </select>
+
+                {formData.isOtherSubject && (
+                  <div style={{ marginTop: "1rem" }}>
+                    <label style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                      Enter Custom Subject
+                      <span className="req-star">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="otherSubject"
+                      value={formData.otherSubject}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      placeholder="e.g., Art, Music, etc."
+                      className={
+                        formErrors.otherSubject 
+                          ? "error-input" 
+                          : formData.otherSubject?.trim() 
+                            ? "success-input" 
+                            : ""
+                      }
+                    />
+                    {formErrors.otherSubject && (
+                      <span className="error-text">{formErrors.otherSubject}</span>
+                    )}
+                  </div>
+                )}
                 {formErrors.subject ? (
                   <span className="error-text">{formErrors.subject}</span>
                 ) : (
-                  formData.subject.trim() && (
+                  formData.subject?.trim() && (
                     <span className="success-text">Looks good</span>
                   )
                 )}

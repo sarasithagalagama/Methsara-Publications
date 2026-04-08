@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Coupon Controller
 // Epic: E6 - Promotion & Loyalty
 // Owner: IT24101266 (Perera M.U.E)
@@ -179,73 +179,6 @@ exports.updateCoupon = async (req, res) => {
       message: "Error updating coupon",
       error: error.message,
     });
-  }
-};
-
-// ============================================
-// Gift Voucher Functions (E6.4)
-// ============================================
-
-// Create Gift Voucher (E6.4)
-exports.createGiftVoucher = async (req, res) => {
-  try {
-    const { value, recipientEmail, recipientName, message, expiryDate } =
-      req.body;
-
-    const voucher = await GiftVoucher.create({
-      value,
-      balance: value,
-      purchasedBy: req.user.id,
-      recipientEmail,
-      recipientName,
-      message,
-      expiryDate:
-        expiryDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Gift voucher created successfully",
-      voucher,
-    });
-  } catch (error) {
-    console.error("Create gift voucher error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Error creating gift voucher" });
-  }
-};
-
-// Validate Gift Voucher
-exports.validateGiftVoucher = async (req, res) => {
-  try {
-    const { code } = req.body;
-    const voucher = await GiftVoucher.findOne({ code: code.toUpperCase() });
-
-    if (
-      !voucher ||
-      !voucher.isActive ||
-      voucher.expiryDate < Date.now() ||
-      voucher.balance <= 0
-    ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid or expired voucher" });
-    }
-
-    res.status(200).json({
-      success: true,
-      voucher: {
-        code: voucher.code,
-        balance: voucher.balance,
-        expiryDate: voucher.expiryDate,
-      },
-    });
-  } catch (error) {
-    console.error("Validate voucher error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Error validating voucher" });
   }
 };
 

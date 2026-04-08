@@ -99,7 +99,9 @@ const roles = [
 
 const AdminSettings = () => {
   // State Variables
-  const [activeTab, setActiveTab] = useState("overview"); // overview, locations, security
+  const params = new URLSearchParams(window.location.search);
+  const initialTab = params.get("tab") || "overview";
+  const [activeTab, setActiveTab] = useState(initialTab); // overview, locations, security
   const [locations, setLocations] = useState([]);
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [securityLogs, setSecurityLogs] = useState([]);
@@ -142,6 +144,10 @@ const AdminSettings = () => {
 
   // Side Effects
   useEffect(() => {
+    // Update URL without full reload
+    const newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?tab=' + activeTab;
+    window.history.pushState({path:newurl},'',newurl);
+
     if (activeTab === "locations") {
       fetchLocations();
     } else if (activeTab === "security") {
@@ -456,6 +462,7 @@ const AdminSettings = () => {
               }
               placeholder="Full street address"
               rows={2}
+              required={true}
             />
           </div>
           <div>

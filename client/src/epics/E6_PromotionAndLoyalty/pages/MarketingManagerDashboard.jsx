@@ -24,9 +24,12 @@ import {
   Edit,
   Search,
   XCircle,
+  ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 import StatCard from "../../../components/dashboard/StatCard";
 import DashboardHeader from "../../../components/dashboard/DashboardHeader";
+import DashboardSection from "../../../components/dashboard/DashboardSection";
 import Modal from "../../../components/common/Modal";
 import StatusModal from "../../../components/common/StatusModal";
 import ConfirmModal from "../../../components/common/ConfirmModal";
@@ -496,6 +499,54 @@ const MarketingManagerDashboard = () => {
         ]}
       />
 
+      {/* Priority Alerts — E6.1 Expiry Tracking */}
+      {stats.endingSoon > 0 && (
+        <div
+          className="dashboard-card"
+          style={{
+            borderLeft: "4px solid var(--error-color)",
+            padding: "1rem 1.25rem",
+            marginBottom: "1.5rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div
+              className="action-icon"
+              style={{
+                padding: "8px",
+                background: "rgba(220,38,38,0.1)",
+                color: "#dc2626",
+                borderRadius: "8px",
+              }}
+            >
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <h4 style={{ fontWeight: 600, fontSize: "0.95rem" }}>
+                Promotion Expiry Warning
+              </h4>
+              <p className="text-secondary text-sm">
+                {stats.endingSoon} coupon(s) or campaign(s) are ending within the next 3 days.
+              </p>
+            </div>
+          </div>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => {
+              setActiveTab("coupons");
+              document
+                .querySelector(".dashboard-tabs")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            Review Now <ArrowRight size={14} style={{ marginLeft: "4px" }} />
+          </button>
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className="dashboard-grid dashboard-grid-4">
         <StatCard
@@ -513,20 +564,102 @@ const MarketingManagerDashboard = () => {
           trend={`${stats.usedToday} used in last 24h`}
         />
         <StatCard
-          icon={<Gift size={24} />}
-          label="Gift Vouchers"
-          value={stats.activeVouchers}
+          icon={<Megaphone size={24} />}
+          label="Campaigns"
+          value={stats.campaigns}
           variant="primary"
-          trend={`Total Balance: Rs. ${stats.totalVoucherBalance?.toLocaleString()}`}
+          trend={`${stats.endingSoon} ending soon`}
         />
         <StatCard
-          icon={<Megaphone size={24} />}
-          label="Active Campaigns"
-          value={stats.campaigns}
-          variant="warning"
-          trend={`${stats.endingSoon} ending within 7 days`}
+          icon={<BarChart2 size={24} />}
+          label="Revenue Impact"
+          value={`Rs. ${stats.totalRevenue?.toLocaleString()}`}
+          variant="success"
+          trend={`${stats.conversionRate}% Conversion`}
         />
       </div>
+
+      {/* ── Quick Priority Actions ── */}
+      <DashboardSection title="Marketing Shortcuts">
+        <div className="dashboard-grid dashboard-grid-4">
+          <div
+            className="dashboard-card action-card"
+            onClick={() => setShowCouponModal(true)}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(37,99,235,0.1)", color: "#2563EB" }}
+            >
+              <Ticket size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Issue Coupon
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Generate discount codes</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Create <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => setShowCampaignModal(true)}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(245,158,11,0.1)", color: "#F59E0B" }}
+            >
+              <Megaphone size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              New Campaign
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Launch site-wide promotions</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Create <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => navigate("/marketing-manager/gift-vouchers")}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(16,185,129,0.1)", color: "#10b981" }}
+            >
+              <Gift size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Gift Vouchers
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Manage issued gift cards</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              View Vouchers <ChevronRight size={16} />
+            </div>
+          </div>
+          <div
+            className="dashboard-card action-card"
+            onClick={() => navigate("/marketing-manager/analytics")}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(139,92,246,0.1)", color: "#8B5CF6" }}
+            >
+              <BarChart2 size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Analytics
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Review performance</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              View Analytics <ChevronRight size={16} />
+            </div>
+          </div>
+        </div>
+      </DashboardSection>
 
       {/* Tabs */}
       <div className="dashboard-tabs">

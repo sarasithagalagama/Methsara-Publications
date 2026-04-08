@@ -63,7 +63,7 @@ import PurchaseOrderList from "./epics/E4_SupplierManagement/pages/supplier/Purc
 import SalesOrderList from "./epics/E4_SupplierManagement/pages/supplier/SalesOrderList";
 import CreateSalesOrder from "./epics/E4_SupplierManagement/pages/supplier/CreateSalesOrder";
 import DebtTracker from "./epics/E4_SupplierManagement/pages/supplier/DebtTracker";
-import SupplierPerformance from "./epics/E4_SupplierManagement/pages/supplier/SupplierPerformance";
+
 import DeliverySchedule from "./epics/E4_SupplierManagement/pages/supplier/DeliverySchedule";
 import SupplierList from "./epics/E4_SupplierManagement/components/Suppliers/SupplierList";
 // E5 - Inventory Management
@@ -284,14 +284,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/supplier-manager/performance"
-              element={
-                <ProtectedRoute allowedRoles={["supplier_manager", "admin"]}>
-                  <SupplierPerformance />
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/supplier-manager/schedule"
               element={

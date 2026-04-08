@@ -70,7 +70,8 @@ const ManageProducts = ({ isTab = false }) => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("/api/products");
+      // Fetch a larger limit for the management table to allow client-side search/sort to work correctly
+      const res = await axios.get("/api/products?limit=1000");
       setProducts(res.data.products || []);
     } catch (error) {
       console.error("Error fetching products:", error);

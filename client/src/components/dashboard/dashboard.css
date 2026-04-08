@@ -685,7 +685,7 @@ body {
 .stat-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #5D4037 !important; /* Mocha */
+  color: var(--text-primary) !important;
   margin-bottom: 0.25rem;
   -webkit-text-fill-color: initial !important; /* Reset any transparent leaks */
 }

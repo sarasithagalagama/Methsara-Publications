@@ -7,7 +7,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { getReviews } = require("../controllers/reviewController");
+const { getReviews, deleteReview } = require("../controllers/reviewController");
 const {
   protect,
   authorize,
