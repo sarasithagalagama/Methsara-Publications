@@ -234,6 +234,127 @@
 /* Dark: progress bars */
 [data-theme="dark"] .progress-bar-container > div:first-child { background: #1e2130; }
 
+/* ============================================
+   Priority Alert Premium Component
+   ============================================ */
+.priority-alert {
+  background: var(--bg-surface);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-left: 5px solid var(--secondary-color);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-md);
+  animation: slideInDown 0.5s ease-out;
+  transition: var(--transition-smooth);
+}
+
+.priority-alert:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Variants */
+.priority-alert.variant-danger {
+  border-left-color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.1);
+}
+
+.priority-alert.variant-warning {
+  border-left-color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.1);
+}
+
+.priority-alert.variant-success {
+  border-left-color: #10b981;
+  border-color: rgba(16, 185, 129, 0.1);
+}
+
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.alert-content-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.alert-icon-box {
+  padding: 12px;
+  background: var(--bg-color);
+  color: var(--primary-color);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.variant-danger .alert-icon-box { background: rgba(239, 68, 68, 0.08); color: #ef4444; }
+.variant-warning .alert-icon-box { background: rgba(245, 158, 11, 0.08); color: #f59e0b; }
+.variant-success .alert-icon-box { background: rgba(16, 185, 129, 0.08); color: #10b981; }
+
+.alert-text-group h4 {
+  margin: 0 0 4px 0;
+  font-family: var(--font-heading) !important;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.alert-text-group p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.alert-btn-premium {
+  background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));
+  color: white !important;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition-smooth);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.alert-btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  filter: brightness(1.1);
+}
+
+.alert-btn-premium svg {
+  transition: transform 0.3s ease;
+}
+
+.alert-btn-premium:hover svg {
+  transform: translateX(4px);
+}
+
+/* Dark mode overrides for Priority Alert */
+[data-theme="dark"] .priority-alert {
+  background: rgba(26, 29, 39, 0.8);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .alert-icon-box {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 /* Dark: role badges (extended) */
 [data-theme="dark"] .role-admin     { background: rgba(220,38,38,0.15); color: #fca5a5; }
 [data-theme="dark"] .role-customer  { background: rgba(3,105,161,0.15); color: #7dd3fc; }

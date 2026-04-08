@@ -40,6 +40,7 @@ import Modal from "../../../components/common/Modal";
 import ConfirmModal from "../../../components/common/ConfirmModal";
 import toast from "react-hot-toast";
 import SupplierFormModal from "../../../epics/E4_SupplierManagement/components/Suppliers/SupplierFormModal";
+import PriorityAlert from "../../../components/dashboard/PriorityAlert";
 
 const SupplierManagerDashboard = () => {
   const navigate = useNavigate();
@@ -378,72 +379,34 @@ const SupplierManagerDashboard = () => {
         ]}
       />
 
-      {/* Action Required Priority Banner */}
-      {(pendingPOs.length > 0 || approvedPOs.length > 0) && (
-        <div className="dashboard-grid dashboard-grid-2" style={{ marginBottom: "1.5rem" }}>
-          {pendingPOs.length > 0 && (
-            <div
-              className="dashboard-card"
-              style={{
-                borderLeft: "4px solid var(--warning-color)",
-                padding: "1.25rem",
-                display: "flex",
-                flexDirection: "column",
-                marginBottom: 0
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--warning-color)" }}>
-                  <ClipboardList size={20} />
-                  <span style={{ fontWeight: 600, fontSize: "0.95rem" }}>Needs Approval</span>
-                </div>
-                <span className="badge warning" style={{ fontSize: "1.1rem" }}>{pendingPOs.length}</span>
-              </div>
-              <p className="text-muted text-sm" style={{ margin: "0 0 1rem 0" }}>Purchase orders waiting for manager approval</p>
-              <button 
-                className="btn btn-secondary" 
-                style={{ alignSelf: "flex-start", padding: "0.25rem 0.75rem", fontSize: "0.85rem" }}
-                onClick={() => {
-                  poSectionRef.current?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Review POs <ArrowRight size={14} style={{ marginLeft: "4px" }} />
-              </button>
-            </div>
-          )}
+      {/* Action Required Priority Alerts */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        {pendingPOs.length > 0 && (
+          <PriorityAlert
+            title="Purchase Orders Needing Approval"
+            description={`${pendingPOs.length} purchase order(s) are waiting for manager approval.`}
+            icon={<ClipboardList size={22} />}
+            actionLabel="Review POs"
+            onAction={() => {
+              navigate("/supplier-manager/purchase-orders");
+            }}
+            variant="warning"
+          />
+        )}
 
-          {approvedPOs.length > 0 && (
-            <div
-              className="dashboard-card"
-              style={{
-                borderLeft: "4px solid var(--success-color)",
-                padding: "1.25rem",
-                display: "flex",
-                flexDirection: "column",
-                marginBottom: 0
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--success-color)" }}>
-                  <PackageCheck size={20} />
-                  <span style={{ fontWeight: 600, fontSize: "0.95rem" }}>Delivery Verification</span>
-                </div>
-                <span className="badge success" style={{ fontSize: "1.1rem" }}>{approvedPOs.length}</span>
-              </div>
-              <p className="text-muted text-sm" style={{ margin: "0 0 1rem 0" }}>Approved POs awaiting delivery and verification</p>
-              <button 
-                className="btn btn-secondary" 
-                style={{ alignSelf: "flex-start", padding: "0.25rem 0.75rem", fontSize: "0.85rem" }}
-                onClick={() => {
-                  poSectionRef.current?.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Verify Deliveries <ArrowRight size={14} style={{ marginLeft: "4px" }} />
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+        {approvedPOs.length > 0 && (
+          <PriorityAlert
+            title="Delivery Verifications Pending"
+            description={`${approvedPOs.length} approved PO(s) are awaiting delivery and verification.`}
+            icon={<PackageCheck size={22} />}
+            actionLabel="Verify Deliveries"
+            onAction={() => {
+              navigate("/supplier-manager/purchase-orders");
+            }}
+            variant="success"
+          />
+        )}
+      </div>
 
       {/* Stats Grid */}
       <div className="dashboard-grid dashboard-grid-4">

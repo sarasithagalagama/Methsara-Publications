@@ -44,6 +44,7 @@ import "../../../components/dashboard/dashboard.css";
 import "./MarketingManagerDashboard.css";
 import { LogoutModal } from "../../../epics/E1_UserAndRoleManagement/components/Auth/AuthModals";
 import GiftVoucherManagement from "../../../epics/E6_PromotionAndLoyalty/pages/marketing/GiftVoucherManagement";
+import PriorityAlert from "../../../components/dashboard/PriorityAlert";
 
 const MarketingManagerDashboard = () => {
   const navigate = useNavigate();
@@ -501,50 +502,18 @@ const MarketingManagerDashboard = () => {
 
       {/* Priority Alerts — E6.1 Expiry Tracking */}
       {stats.endingSoon > 0 && (
-        <div
-          className="dashboard-card"
-          style={{
-            borderLeft: "4px solid var(--error-color)",
-            padding: "1rem 1.25rem",
-            marginBottom: "1.5rem",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+        <PriorityAlert
+          title="Promotion Expiry Warning"
+          description={`${stats.endingSoon} coupon(s) or campaign(s) are ending within the next 3 days.`}
+          actionLabel="Review Now"
+          onAction={() => {
+            setActiveTab("coupons");
+            document
+              .querySelector(".dashboard-tabs")
+              ?.scrollIntoView({ behavior: "smooth" });
           }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              className="action-icon"
-              style={{
-                padding: "8px",
-                background: "rgba(220,38,38,0.1)",
-                color: "#dc2626",
-                borderRadius: "8px",
-              }}
-            >
-              <AlertCircle size={20} />
-            </div>
-            <div>
-              <h4 style={{ fontWeight: 600, fontSize: "0.95rem" }}>
-                Promotion Expiry Warning
-              </h4>
-              <p className="text-secondary text-sm">
-                {stats.endingSoon} coupon(s) or campaign(s) are ending within the next 3 days.
-              </p>
-            </div>
-          </div>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => {
-              setActiveTab("coupons");
-              document
-                .querySelector(".dashboard-tabs")
-                ?.scrollIntoView({ behavior: "smooth" });
-            }}
-          >
-            Review Now <ArrowRight size={14} style={{ marginLeft: "4px" }} />
-          </button>
-        </div>
+          variant="danger"
+        />
       )}
 
       {/* Stats Grid */}

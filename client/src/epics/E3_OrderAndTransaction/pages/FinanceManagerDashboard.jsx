@@ -41,6 +41,7 @@ import "./FinanceManagerDashboard.css";
 import Invoice from "../../../epics/E3_OrderAndTransaction/components/Order/Invoice";
 import Modal from "../../../components/common/Modal";
 import ConfirmModal from "../../../components/common/ConfirmModal";
+import PriorityAlert from "../../../components/dashboard/PriorityAlert";
 import {
   Input,
   Select,
@@ -738,50 +739,16 @@ const FinanceManagerDashboard = () => {
         </div>
       </DashboardSection>
 
-      {/* Urgent Alerts Strip */}
+      {/* Priority Alerts — E3.4 Payment Verification */}
       {stats.pendingBankTransfers > 0 && (
-        <div
-          className="finance-alert-strip"
-          style={{
-            display: "flex",
-            gap: "1rem",
-            padding: "0.75rem 1rem",
-            background: "rgba(37, 99, 235, 0.05)",
-            border: "1px solid rgba(37, 99, 235, 0.1)",
-            borderRadius: "var(--radius-md)",
-            marginBottom: "1.5rem",
-            alignItems: "center",
-          }}
-        >
-          <span
-            style={{
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              color: "var(--text-secondary)",
-            }}
-          >
-            Action Required:
-          </span>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              padding: "0.25rem 0.75rem",
-              background: "#eff6ff",
-              color: "#1d4ed8",
-              borderRadius: "20px",
-              fontSize: "0.8rem",
-              fontWeight: 500,
-              border: "1px solid #dbeafe",
-              cursor: "pointer",
-            }}
-            onClick={() => setActiveTab("payments")}
-          >
-            <CreditCard size={14} />
-            {stats.pendingBankTransfers} bank transfers awaiting confirmation
-          </div>
-        </div>
+        <PriorityAlert
+          title="Payment Verification Required"
+          description={`${stats.pendingBankTransfers} bank transfer(s) are awaiting proof confirmation.`}
+          icon={<CreditCard size={22} />}
+          actionLabel="Verify Payments"
+          onAction={() => setActiveTab("payments")}
+          variant="warning"
+        />
       )}
 
       {/* Stats Grid */}

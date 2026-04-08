@@ -47,6 +47,7 @@ import StockChart from "../../../components/dashboard/charts/StockChart";
 import StockAdjustmentModal from "../../../epics/E5_InventoryManagement/components/Inventory/StockAdjustmentModal";
 import "../../../components/dashboard/dashboard.css";
 import "./InventoryManagerDashboard.css";
+import PriorityAlert from "../../../components/dashboard/PriorityAlert";
 
 const InventoryManagerDashboard = () => {
   const navigate = useNavigate();
@@ -1095,6 +1096,19 @@ const InventoryManagerDashboard = () => {
             </div>
           )}
         </div>
+      )}
+      {/* Priority Alerts — E5.9 Low Stock Tracking */}
+      {stats.lowStock > 0 && (
+        <PriorityAlert
+          title="Critical Inventory Alerts"
+          description={`${stats.lowStock} item(s) are currently below reorder levels or out of stock across all locations.`}
+          icon={<AlertTriangle size={22} />}
+          actionLabel="View All Alerts"
+          onAction={() => {
+            navigate("/inventory-manager/alerts");
+          }}
+          variant="danger"
+        />
       )}
 
       {/* Stats Grid — E5.1/E5.2/E5.9 */}

@@ -5,7 +5,7 @@
 // Purpose: AdminDashboard page component
 // ============================================
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Users,
@@ -35,9 +35,11 @@ import Modal from "../../../components/common/Modal";
 import ConfirmModal from "../../../components/common/ConfirmModal";
 import "../../../components/dashboard/dashboard.css";
 import "./AdminDashboard.css";
+import PriorityAlert from "../../../components/dashboard/PriorityAlert";
 
 const AdminDashboard = () => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   // State Variables
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -327,55 +329,59 @@ const AdminDashboard = () => {
 
       {/* ── Priority Alert Banner ── */}
       {(pendingApprovals.length > 0 || stockAlerts.length > 0) && (
-        <div style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "10px",
-          marginBottom: "18px",
-          padding: "14px 18px",
-          background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
-          border: "1px solid #f59e0b",
-          borderLeft: "4px solid #f59e0b",
-          borderRadius: "10px",
-          alignItems: "center",
-        }}>
-          <Bell size={18} style={{ color: "#d97706", flexShrink: 0 }} />
-          <span style={{ fontWeight: 700, color: "#92400e", fontSize: "0.9rem", marginRight: "6px" }}>
-            Action Required:
-          </span>
-          {pendingApprovals.length > 0 && (
-            <span
-              style={{
-                background: "#fbbf24",
-                color: "#78350f",
-                borderRadius: "20px",
-                padding: "3px 12px",
-                fontSize: "0.82rem",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-              onClick={() => document.getElementById("approvals-section")?.scrollIntoView({ behavior: "smooth" })}
-            >
-              ✏️ {pendingApprovals.length} pending approval{pendingApprovals.length > 1 ? "s" : ""}
-            </span>
-          )}
-          {stockAlerts.length > 0 && (
-            <span
-              style={{
-                background: "#fca5a5",
-                color: "#7f1d1d",
-                borderRadius: "20px",
-                padding: "3px 12px",
-                fontSize: "0.82rem",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-              onClick={() => document.getElementById("stock-alerts-section")?.scrollIntoView({ behavior: "smooth" })}
-            >
-              🔴 {stockAlerts.length} low-stock / out-of-stock alert{stockAlerts.length > 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
+        <PriorityAlert
+          title="System Action Required"
+          description={
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginTop: "4px" }}>
+              {pendingApprovals.length > 0 && (
+                <span
+                  style={{
+                    background: "rgba(245, 158, 11, 0.15)",
+                    color: "#d97706",
+                    borderRadius: "20px",
+                    padding: "4px 14px",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    border: "1px solid rgba(245, 158, 11, 0.2)",
+                    transition: "all 0.2s ease"
+                  }}
+                  onClick={() => document.getElementById("approvals-section")?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  ✏️ {pendingApprovals.length} pending approval{pendingApprovals.length > 1 ? "s" : ""}
+                </span>
+              )}
+              {stockAlerts.length > 0 && (
+                <span
+                  style={{
+                    background: "rgba(220, 38, 38, 0.1)",
+                    color: "#dc2626",
+                    borderRadius: "20px",
+                    padding: "4px 14px",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    border: "1px solid rgba(220, 38, 38, 0.15)",
+                    transition: "all 0.2s ease"
+                  }}
+                  onClick={() => document.getElementById("stock-alerts-section")?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  🔴 {stockAlerts.length} stock alert{stockAlerts.length > 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+          }
+          icon={<Bell size={22} />}
+          actionLabel="View All Alerts"
+          onAction={() => {
+            if (pendingApprovals.length > 0) {
+              document.getElementById("approvals-section")?.scrollIntoView({ behavior: "smooth" });
+            } else {
+              navigate("/inventory-manager/alerts");
+            }
+          }}
+          variant="warning"
+        />
       )}
 
 
