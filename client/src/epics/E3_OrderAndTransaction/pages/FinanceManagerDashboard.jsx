@@ -66,6 +66,10 @@ const FinanceManagerDashboard = () => {
   });
 
   const [recentTransactions, setRecentTransactions] = useState([]);
+  const [recentSearchQuery, setRecentSearchQuery] = useState("");
+  const [recentCurrentPage, setRecentCurrentPage] = useState(1);
+  const RECENT_ITEMS_PER_PAGE = 5;
+
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [staff, setStaff] = useState([]);
@@ -273,9 +277,7 @@ const FinanceManagerDashboard = () => {
       const combinedTransactions = [
         ...normalizedOrders,
         ...normalizedFinancials,
-      ]
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 10);
+      ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
       setRecentTransactions(combinedTransactions);
 
@@ -621,6 +623,21 @@ const FinanceManagerDashboard = () => {
   // Opens the bank slip in an in-page popup modal.
   const handleViewSlip = (dataUrl) => setSlipViewerUrl(dataUrl);
 
+  const filteredRecentTransactions = recentTransactions.filter((tx) =>
+    (tx.description || "").toLowerCase().includes(recentSearchQuery.toLowerCase()) ||
+    (tx.type || "").toLowerCase().includes(recentSearchQuery.toLowerCase())
+  );
+  
+  const totalRecentPages = Math.ceil(filteredRecentTransactions.length / RECENT_ITEMS_PER_PAGE);
+  const paginatedRecentTransactions = filteredRecentTransactions.slice(
+    (recentCurrentPage - 1) * RECENT_ITEMS_PER_PAGE,
+    recentCurrentPage * RECENT_ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    setRecentCurrentPage(1);
+  }, [recentSearchQuery]);
+
   if (loading) {
     // Render
     return (
@@ -643,7 +660,7 @@ const FinanceManagerDashboard = () => {
             icon: <PieChart size={18} />,
             onClick: () =>
               document
-                .querySelector(".dashboard-grid")
+                .getElementById("analytics-section")
                 ?.scrollIntoView({ behavior: "smooth" }),
             variant: "outline",
           },
@@ -1043,7 +1060,7 @@ const FinanceManagerDashboard = () => {
       )}
 
       {/* Analytics Charts */}
-      <div className="dashboard-grid dashboard-grid-2">
+      <div className="dashboard-grid dashboard-grid-2" id="analytics-section">
         <div className="dashboard-card">
           <div className="dashboard-card-header">
             <h2 className="card-title">Weekly Revenue (Rs)</h2>
@@ -1066,21 +1083,47 @@ const FinanceManagerDashboard = () => {
 
       {/* Recent Transactions */}
       <div className="dashboard-card" id="transactions-section">
-        <div className="dashboard-card-header">
+        <div className="dashboard-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <h2 className="card-title">Recent Transactions</h2>
-          <button
-            className="card-action"
-            onClick={() => navigate("/finance-manager/transactions")}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "var(--primary-color)",
-              fontWeight: 500,
-            }}
-          >
-            View All →
-          </button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setEditingFinItem(null);
+                setShowTransactionModal(true);
+              }}
+            >
+              + Add Manual Entry
+            </button>
+            <div className="search-bar" style={{ margin: 0 }}>
+              <input
+                type="text"
+                placeholder="Search transactions..."
+                value={recentSearchQuery}
+                onChange={(e) => setRecentSearchQuery(e.target.value)}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-color)',
+                  outline: 'none',
+                  fontSize: '0.85rem'
+                }}
+              />
+            </div>
+            <button
+              className="card-action"
+              onClick={() => navigate("/finance-manager/transactions")}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--primary-color)",
+                fontWeight: 500,
+              }}
+            >
+              View All →
+            </button>
+          </div>
         </div>
 
         <div className="table-container">
@@ -1096,14 +1139,14 @@ const FinanceManagerDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {recentTransactions.length === 0 ? (
+              {paginatedRecentTransactions.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="text-center py-4">
                     No recent transactions found.
                   </td>
                 </tr>
               ) : (
-                recentTransactions.map((tx) => (
+                paginatedRecentTransactions.map((tx) => (
                   <tr key={tx._id}>
                     <td>{new Date(tx.date).toLocaleDateString()}</td>
                     <td>
@@ -1172,11 +1215,44 @@ const FinanceManagerDashboard = () => {
               )}
             </tbody>
           </table>
+          
+          {totalRecentPages > 1 && (
+            <div
+              className="pagination-container"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.5rem",
+                marginTop: "1.5rem",
+                marginBottom: "0.5rem"
+              }}
+            >
+              <button
+                className="btn-icon"
+                onClick={() => setRecentCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={recentCurrentPage === 1}
+                style={{ opacity: recentCurrentPage === 1 ? 0.5 : 1 }}
+              >
+                &larr;
+              </button>
+              <div style={{ display: "flex", gap: "0.25rem", fontSize: "0.9rem" }}>
+                Page {recentCurrentPage} of {totalRecentPages}
+              </div>
+              <button
+                className="btn-icon"
+                onClick={() =>
+                  setRecentCurrentPage((p) => Math.min(totalRecentPages, p + 1))
+                }
+                disabled={recentCurrentPage === totalRecentPages}
+                style={{ opacity: recentCurrentPage === totalRecentPages ? 0.5 : 1 }}
+              >
+                &rarr;
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-
-
       {selectedOrder && (
         <Invoice order={selectedOrder} onClose={() => setSelectedOrder(null)} />
       )}
@@ -1541,74 +1617,6 @@ const FinanceManagerDashboard = () => {
         </div>
       </Modal>
 
-      {/* Transaction History Section */}
-      <div className="dashboard-card" style={{ marginTop: "2rem" }}>
-        <div className="dashboard-card-header">
-          <h2 className="card-title">Financial Transaction Logs</h2>
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={() => {
-              setEditingFinItem(null);
-              setShowTransactionModal(true);
-            }}
-          >
-            + Add Manual Entry
-          </button>
-        </div>
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Amount</th>
-                <th>Description</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allFinancialTransactions.map((tx) => (
-                <tr key={tx._id}>
-                  <td>{new Date(tx.date).toLocaleDateString()}</td>
-                  <td>
-                    <span
-                      className={`status-badge ${tx.type === "Salary" ? "info" : tx.type === "Refund" ? "warning" : tx.type === "Bonus" ? "gold" : tx.type === "Customer Collection" ? "success" : tx.type === "Supplier Payment" ? "error" : "primary"}`}
-                    >
-                      {tx.type}
-                    </span>
-                  </td>
-                  <td
-                    style={{
-                      color: tx.isIncome ? "#16a34a" : "#dc2626",
-                      fontWeight: "600",
-                    }}
-                  >
-                    {tx.isIncome ? "+" : "-"} Rs. {tx.amount.toLocaleString()}
-                  </td>
-                  <td>{tx.description}</td>
-                  <td>
-                    <div className="table-actions">
-                      <button
-                        className="btn-icon"
-                        title="Edit Transaction"
-                        onClick={() => {
-                          setEditingFinItem(tx);
-                          setShowTransactionModal(true);
-                        }}
-                      >
-                        <Settings size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {allFinancialTransactions.length === 0 && (
-            <p className="text-center p-4">No transactions recorded yet.</p>
-          )}
-        </div>
-      </div>
 
       {/* Transaction Entry/Edit Modal */}
       <Modal
