@@ -348,7 +348,7 @@ const AdminDashboard = () => {
                   }}
                   onClick={() => document.getElementById("approvals-section")?.scrollIntoView({ behavior: "smooth" })}
                 >
-                  ✏️ {pendingApprovals.length} pending approval{pendingApprovals.length > 1 ? "s" : ""}
+                  {pendingApprovals.length} pending approval{pendingApprovals.length > 1 ? "s" : ""}
                 </span>
               )}
               {stockAlerts.length > 0 && (
@@ -366,7 +366,7 @@ const AdminDashboard = () => {
                   }}
                   onClick={() => document.getElementById("stock-alerts-section")?.scrollIntoView({ behavior: "smooth" })}
                 >
-                  🔴 {stockAlerts.length} stock alert{stockAlerts.length > 1 ? "s" : ""}
+                  {stockAlerts.length} stock alert{stockAlerts.length > 1 ? "s" : ""}
                 </span>
               )}
             </div>
