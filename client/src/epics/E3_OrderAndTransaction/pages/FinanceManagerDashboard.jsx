@@ -695,6 +695,84 @@ const FinanceManagerDashboard = () => {
               Open Payroll <ChevronRight size={16} />
             </div>
           </div>
+
+          {/* Moved from Quick Actions */}
+          <div
+            className="dashboard-card action-card"
+            onClick={() => setShowSupplierModal(true)}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(239,68,68,0.1)", color: "#EF4444" }}
+            >
+              <TruckIcon size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Supplier Payments
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>
+              Track and settle vendor accounts
+            </p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Settle Payments <ChevronRight size={16} />
+            </div>
+          </div>
+
+          <div
+            className="dashboard-card action-card"
+            onClick={() => setShowPOModal(true)}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(245,158,11,0.1)", color: "#F59E0B" }}
+            >
+              <ClipboardList size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              PO Requests
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>
+              Process supplier payment requests
+            </p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              View Requests (
+              {
+                purchaseOrders.filter(
+                  (po) => po.paymentRequested && po.paymentStatus !== "Paid",
+                ).length
+              }
+              ) <ChevronRight size={16} />
+            </div>
+          </div>
+
+          <div
+            className="dashboard-card action-card"
+            onClick={() => {
+              setActiveTab("payments");
+              const element = document.getElementById("payments-section");
+              if (element) element.scrollIntoView({ behavior: "smooth" });
+            }}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(59,130,246,0.1)", color: "#3B82F6" }}
+            >
+              <CreditCard size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Confirmations
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>
+              Verify bank transfers & update status
+            </p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Verify Payments <ChevronRight size={16} />
+            </div>
+          </div>
+
           <div
             className="dashboard-card action-card"
             onClick={() => navigate("/finance-manager/transactions")}
@@ -714,6 +792,7 @@ const FinanceManagerDashboard = () => {
               View All <ChevronRight size={16} />
             </div>
           </div>
+
           <div
             className="dashboard-card action-card"
             onClick={() => {
@@ -1096,91 +1175,7 @@ const FinanceManagerDashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="dashboard-grid dashboard-grid-3">
-        <div
-          className="dashboard-card action-card"
-          onClick={() => setShowSalaryModal(true)}
-        >
-          <div className="action-icon">
-            <Users size={24} />
-          </div>
-          <h3>Staff Salaries</h3>
-          <p>Manage and process monthly staff payments</p>
-          <span className="action-link">Manage Salaries →</span>
-        </div>
-        <div
-          className="dashboard-card action-card"
-          onClick={() => setShowSupplierModal(true)}
-        >
-          <div className="action-icon">
-            <TruckIcon size={24} />
-          </div>
-          <h3>Supplier Payments</h3>
-          <p>Track and settle vendor accounts</p>
-          <span className="action-link">Settle Payments →</span>
-        </div>
 
-        <div
-          className="dashboard-card action-card"
-          onClick={() => {
-            setActiveTab("payments");
-            const element = document.getElementById("payments-section");
-            if (element) element.scrollIntoView({ behavior: "smooth" });
-          }}
-        >
-          <div className="action-icon">
-            <CreditCard size={24} />
-          </div>
-          <h3>Payment Confirmation</h3>
-          <p>Verify bank transfers and update payment status</p>
-          <span className="action-link">Verify Payments →</span>
-        </div>
-        <div
-          className="dashboard-card action-card"
-          onClick={scrollToTransactions}
-        >
-          <div className="action-icon">
-            <Activity size={24} />
-          </div>
-          <h3>Transaction Logs</h3>
-          <p>View all system transaction history</p>
-          <span className="action-link">View Logs →</span>
-        </div>
-        <div
-          className="dashboard-card action-card"
-          onClick={() => setShowPOModal(true)}
-        >
-          <div className="action-icon">
-            <CreditCard size={24} />
-          </div>
-          <h3>PO Payment Requests</h3>
-          <p>Process pending supplier payment requests</p>
-          <span className="action-link">
-            View Requests (
-            {
-              purchaseOrders.filter(
-                (po) => po.paymentRequested && po.paymentStatus !== "Paid",
-              ).length
-            }
-            ) →
-          </span>
-        </div>
-        <div
-          className="dashboard-card action-card"
-          onClick={() => {
-            setTempTaxConfig(taxConfig);
-            setShowTaxModal(true);
-          }}
-        >
-          <div className="action-icon">
-            <Settings size={24} />
-          </div>
-          <h3>Tax Settings</h3>
-          <p>Configure tax rates and rules</p>
-          <span className="action-link">Configure →</span>
-        </div>
-      </div>
 
       {selectedOrder && (
         <Invoice order={selectedOrder} onClose={() => setSelectedOrder(null)} />
