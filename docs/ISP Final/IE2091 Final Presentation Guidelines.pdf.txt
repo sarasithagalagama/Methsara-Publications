@@ -1,0 +1,41 @@
+ 
+IE2091 - ISP 
+Final Presentation                                                                                   Semester 2 
+ 
+BSc (Hons) in   Information Technology 
+  
+Year2 
+  
+Final Presentation Guidelines 
+ 
+You are expected to perform the following tasks,  
+1. The Final presentation is of 30 minutes duration of the final product 
+2. Briefly introduce your project using marketing video (Marketing video guideline available 
+in the courseweb 
+3. Each member of the group will roughly get 3 minutes to present their component 
+4. Same as Sprint II, demonstrate your component using an integrated project (not an 
+individual piece of implementation). It would be more efficient to include a demo button 
+instead of having to fill out each text box individually, which would help reduce the 
+presentation time. 
+5. Your presentation should include (Make this as a marketing presentation. No need to 
+prepare presentation slides), 
+1. Solution narrative – Use marketing video prepared 
+2. Demonstration (all CRUD operations using real data) 
+3. U/I Design 
+4. Input Validations 
+5. Unit tests performed 
+6. Report generated (Recommended to have at least 1 report/dashboard summarizing 
+the outputs from each member) 
+7. Future work 
+6. Focus on demonstrating your product in a logical order (e.g., customer, order, payment) 
+7. Make sure you have enough amount of data available in your dataset prior to the 
+presentation to do the demonstration effectively.  
+8. You are allowed to use your laptops for the presentation. In that case, please make sure 
+your laptop can be connected to the projector without any technical issues. 
+9. There will be a 15-minute VIVA conducted following the presentation. 
+10. VIVA will be mainly focusing on, code/database review. Therefore its, important each of 
+you is aware of the code and database of your component. 
+11. Make sure to update the Jira board as well 
+ 
+You should score >= 45% for the final presentation and viva to pass the module 
+ 

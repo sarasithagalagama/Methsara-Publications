@@ -1,0 +1,20 @@
+Common issues to address in the projects. 
+Important: The connections between each interface will be checked during  the final 
+presentation. Make sure the flow between each function is working properly.  
+1. Validate all the text fields.  
+a. Ex: Number, Text, Email, Contact number  
+2. ID (customer ID, emp ID0 – Auto generated 
+3. Add date / time pickers instead of typing date and time separately. 
+4. Add dropdown lists without allowing users to type if there are know set of categories 
+available . Radio buttons  
+a. Ex : Roles of employees : Manager, receptionist, doctor, lab assistant 
+5. Re check about the color schemes, you have used  
+a. UI Color Picker | LearnCodeOnline 
+b. Color Picker - Coolors 
+c.  
+ 
+ 
+6. Have proper error messages and confirmation boxes. 
+7. Address all the comments given during the presentation.  
+8. 23rd of April onwards – Final presentation  
+9. 1 week after the final exam– Final report submission 

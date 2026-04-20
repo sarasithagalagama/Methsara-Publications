@@ -1,0 +1,66 @@
+ BSc (Hons) in Information Technology   
+ (Information Systems Engineering)  
+ 
+             IE2091 – Information Systems Project                                                                               Year 2 
+ 
+ 
+Important Guidelines for Writing the final report 
+▪ Remember that you are writing a professional as well as a technical document. So 
+do not make it a “fancy document”. 
+▪ Use the cover page given in “ IE2091 Final report Cover Page .doc”. Remove the 
+lines in the blue color font and insert your project details to those lines. Do not 
+alter the lines in black color. The complete page needs to be in “BLACK” color. 
+▪ Use “Times New Roman” font. Main text (body text) must be in 12 pts. Use 
+suitable sizes for headings (You can use the default sizes given in the “IE2091 
+Final Report Template.doc”. Line spacing for main text must be 1.5.  
+▪ All pages except the cover page must be numbered, and the number must appear 
+on the lower right-hand corner of the page. 
+▪ Number every image and data table and refer to them in the main text using the 
+numbers. 
+▪ Maximum number of pages excluding the appendices must be 50. 
+▪ Write a draft document, show it to the supervisor, make the corrections indicated 
+by the supervisor before you submit it in Courseweb. 
+ 
+NOTE :  
+▪ Following the guidelines, templates and standards are important, note that marks 
+will get deducted otherwise. 
+ 
+ 
+ 
+ 
+ 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ BSc (Hons) in Information Technology   
+ (Information Systems Engineering)  
+ 
+             IE2091 – Information Systems Project                                                                               Year 2 
+ 
+ 
+Assignment weight for the final grade : 10% 
+ 
+Mark Distribution 
+ 
+Criteria Mark allocation 
+Abstract  4% 
+Problem Statement  5% 
+Product Scope  5% 
+Project Report Structure 3% 
+Requirements and Analysis 10% 
+Design 15% 
+Implementation  15% 
+ Testing  10% 
+Assessment of the Project results 10% 
+Lessons Learned  10% 
+ Future Work 10% 
+References 3% 
+Total Marks (100)  
+ 
+ 
+ 
