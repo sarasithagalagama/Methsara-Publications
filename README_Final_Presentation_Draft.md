@@ -64,6 +64,11 @@ While demoing, each member *must* explicitly highlight:
 - Have your VS Code open and ready to explain routing, `server.js` integration, and specific logic.
 - Ensure the **Jira Board** is 100% updated before stepping into the presentation.
 
-## Presentation Prep actions
-- Deploy or run locally (make sure your laptop can be connected to the projector without technical issues).
-- Populate the MongoDB Atlas dataset with **enough amount of data** beforehand so lists and dashboards don't look empty to do the demonstration effectively.
+## 5. Pre-Presentation Checklist
+
+To ensure a smooth delivery on presentation day, please review these final preparation steps:
+
+- [ ] **Technical Readiness**: Deploy your application or ensure it runs flawlessly in your local environment. Don't forget to verify that your laptop connects to the projector without any display issues!
+- [ ] **Data Preparation**: Populate your MongoDB Atlas database with a realistic amount of dummy data beforehand. Having rich data makes your dashboards come alive and ensures your demonstration is engaging and impactful.
+
+You've got this! Good luck with the presentation!

@@ -262,16 +262,25 @@ const InventoryManagerDashboard = () => {
   // Initialize transfer form defaults
   useEffect(() => {
     if (showTransferModal) {
-      const otherLocation =
-        allLocations.find((l) => l !== selectedLocation) ||
-        (selectedLocation === mainWarehouseName ? "Other" : mainWarehouseName);
-      setTransferForm((prev) => ({
-        ...prev,
-        toLocation: selectedLocation,
-        fromLocation: otherLocation,
-      }));
+      // For master/admin: default is to receive INTO the main warehouse FROM the first branch.
+      // For location managers: request stock FROM main warehouse TO their assigned location.
+      if (isMasterOrAdmin) {
+        const defaultFrom =
+          allLocations.find((l) => l !== mainWarehouseName) || mainWarehouseName;
+        setTransferForm((prev) => ({
+          ...prev,
+          fromLocation: defaultFrom,
+          toLocation: mainWarehouseName,
+        }));
+      } else {
+        setTransferForm((prev) => ({
+          ...prev,
+          fromLocation: mainWarehouseName,
+          toLocation: user?.assignedLocation || selectedLocation,
+        }));
+      }
     }
-  }, [showTransferModal, selectedLocation, allLocations, mainWarehouseName]);
+  }, [showTransferModal, selectedLocation, allLocations, mainWarehouseName, isMasterOrAdmin]);
 
   // Fetch inventory for source location in transfer
   useEffect(() => {
@@ -1111,23 +1120,27 @@ const InventoryManagerDashboard = () => {
         />
       )}
 
-      {/* Stats Grid — E5.1/E5.2/E5.9 */}
+      {/* Stats Grid & Chart Row — Neat and User-Friendly Layout */}
       <div
         className={`dashboard-grid ${availableLocations.length > 1 ? "dashboard-grid-main-side" : ""}`}
       >
         <div>
           <div
-            className={`dashboard-grid ${availableLocations.length > 1 ? "dashboard-grid-4" : "dashboard-grid-3"}`}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "1.25rem",
+            }}
           >
             <StatCard
               icon={<Package size={24} />}
-              label="Total Items"
+              label="Total Inventory Items"
               value={stats.totalItems}
               variant="primary"
             />
             <StatCard
               icon={<AlertTriangle size={24} />}
-              label="Low Stock"
+              label="Items Low on Stock"
               value={stats.lowStock}
               variant="warning"
               onClick={() => {
@@ -1137,7 +1150,7 @@ const InventoryManagerDashboard = () => {
             />
             <StatCard
               icon={<XCircle size={24} />}
-              label="Out of Stock"
+              label="Completely Out of Stock"
               value={stats.outOfStock}
               variant="danger"
               onClick={() => {
@@ -1145,20 +1158,12 @@ const InventoryManagerDashboard = () => {
                 setInventoryStatusFilter("Out of Stock");
               }}
             />
-            {availableLocations.length > 1 && (
-              <StatCard
-                icon={<MapPin size={24} />}
-                label="Locations"
-                value={stats.locations}
-                variant="primary"
-              />
-            )}
           </div>
         </div>
 
-        {/* Chart Column — Only show if multiple locations exist for comparison */}
+        {/* Stock Distribution Chart Column */}
         {availableLocations.length > 1 && (
-          <div className="dashboard-card">
+          <div className="dashboard-card" style={{ margin: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
             <StockChart data={distribution} />
           </div>
         )}
