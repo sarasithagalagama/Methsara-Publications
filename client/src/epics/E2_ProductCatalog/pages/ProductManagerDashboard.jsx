@@ -1364,7 +1364,6 @@ const ProductManagerDashboard = () => {
               <div className="form-group">
                 <label>
                   Page Count
-                  <span className="field-hint">Optional</span>
                 </label>
                 <input
                   type="number"
