@@ -66,7 +66,10 @@ export const LoginModal = ({ isOpen, onClose, onSwitchToRegister }) => {
       const { role } = result.user;
       if (role === "customer") navigate("/customer/dashboard");
       else if (role === "admin") navigate("/admin/dashboard");
-      else navigate(`/${role.replace("_", "-")}/dashboard`);
+      else if (["master_inventory_manager", "location_inventory_manager", "inventory_manager"].includes(role)) {
+        navigate("/inventory-manager/dashboard");
+      }
+      else navigate(`/${role.replace(/_/g, "-")}/dashboard`);
     } else {
       setError(result.message);
       setLoading(false);
