@@ -18,6 +18,12 @@ const productSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  // [E2.11] language: tracks available languages for the book (English, Sinhala, or Both)
+  language: {
+    type: String,
+    enum: ["English", "Sinhala", "Both"],
+    default: "English",
+  },
   author: {
     type: String,
     required: [true, "Author name is required"],

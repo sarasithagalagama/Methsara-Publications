@@ -160,16 +160,7 @@ const CategoryManager = () => {
                         <span className="text-muted text-xs">Books</span>
                       </td>
                       <td>
-                        <div className="progress-bar-container">
-                          <div
-                            className="progress-bar"
-                            style={{
-                              width: `${percentage}%`,
-                              background: "var(--gold-medium)",
-                            }}
-                          />
-                          <span className="progress-label">{percentage}%</span>
-                        </div>
+                        <span style={{ fontWeight: 600 }}>{percentage}%</span>
                       </td>
                     </tr>
                   );

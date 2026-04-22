@@ -29,6 +29,9 @@ import {
   ClipboardList,
   ChevronRight,
   CheckCircle,
+  Download,
+  Filter,
+  Printer,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import StatCard from "../../../components/dashboard/StatCard";
@@ -39,6 +42,7 @@ import SalesChart from "../../../components/dashboard/charts/SalesChart";
 import "../../../components/dashboard/dashboard.css";
 import "./FinanceManagerDashboard.css";
 import Invoice from "../../../epics/E3_OrderAndTransaction/components/Order/Invoice";
+import TransactionInvoice from "../../../epics/E3_OrderAndTransaction/components/Order/TransactionInvoice";
 import Modal from "../../../components/common/Modal";
 import ConfirmModal from "../../../components/common/ConfirmModal";
 import PriorityAlert from "../../../components/dashboard/PriorityAlert";
@@ -72,6 +76,8 @@ const FinanceManagerDashboard = () => {
 
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedFinancialTransaction, setSelectedFinancialTransaction] =
+    useState(null);
   const [staff, setStaff] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
 
@@ -108,7 +114,21 @@ const FinanceManagerDashboard = () => {
   const [showTransactionModal, setShowTransactionModal] = useState(false);
   const [allFinancialTransactions, setAllFinancialTransactions] = useState([]);
   const [editingFinItem, setEditingFinItem] = useState(null);
-  const [activeTab, setActiveTab] = useState("payments"); // [E3.9] Tabs: payments (default), overview (revenue), salaries (E3.11), suppliers (E4 integration)
+  const [activeTab, setActiveTab] = useState("payments"); // [E3.9] Tabs: payments (default), invoices, overview
+
+  // [E3.12] Invoice Generator State
+  // invoiceFilters: controls which transactions are shown in the generator table
+  //   - type: matches tx.type ("Salary", "Bonus", "Other", etc.) or "All"
+  //   - direction: "Income" | "Expense" | "All"
+  //   - dateFrom / dateTo: optional ISO date strings for range filtering
+  const [invoiceFilters, setInvoiceFilters] = useState({
+    type: "All",
+    direction: "All",
+    dateFrom: "",
+    dateTo: "",
+  });
+  // selectedInvoiceTxns: array of _id strings for checked transactions in the generator
+  const [selectedInvoiceTxns, setSelectedInvoiceTxns] = useState([]);
   const [showPOModal, setShowPOModal] = useState(false);
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -143,6 +163,209 @@ const FinanceManagerDashboard = () => {
 
   const closeConfirm = () =>
     setConfirmState((prev) => ({ ...prev, isOpen: false }));
+
+  // [E3.12] Invoice Generator Helpers
+
+  // invoiceTxnPool: unified, deduplicated list of all non-order financial transactions
+  // Merges recentTransactions (already loaded) with allFinancialTransactions to avoid
+  // missing entries when the dashboard data is partially loaded.
+  const invoiceTxnPool = [
+    ...recentTransactions.filter((tx) => tx.type !== "Order").map((tx) => tx.originalData).filter(Boolean),
+    ...allFinancialTransactions,
+  ].filter(
+    (tx, idx, arr) => tx && arr.findIndex((t) => t._id === tx._id) === idx // deduplicate by _id
+  );
+
+  // filteredInvoiceTxns: applies all active invoiceFilters to the pool
+  // Each filter is optional — empty/"All" values are treated as no-op
+  const filteredInvoiceTxns = invoiceTxnPool.filter((tx) => {
+    const matchType =
+      invoiceFilters.type === "All" || tx.type === invoiceFilters.type;
+    const matchDir =
+      invoiceFilters.direction === "All" ||
+      (invoiceFilters.direction === "Income" && tx.isIncome) ||
+      (invoiceFilters.direction === "Expense" && !tx.isIncome);
+    const txDate = new Date(tx.date || tx.createdAt);
+    const matchFrom =
+      !invoiceFilters.dateFrom || txDate >= new Date(invoiceFilters.dateFrom);
+    const matchTo =
+      !invoiceFilters.dateTo || txDate <= new Date(invoiceFilters.dateTo + "T23:59:59"); // inclusive end-of-day
+    return matchType && matchDir && matchFrom && matchTo;
+  });
+
+  // toggleInvoiceTxn: add or remove a single transaction _id from the selection
+  const toggleInvoiceTxn = (id) => {
+    setSelectedInvoiceTxns((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  // toggleAllInvoiceTxns: select all visible (filtered) transactions, or clear if all already selected
+  const toggleAllInvoiceTxns = () => {
+    if (selectedInvoiceTxns.length === filteredInvoiceTxns.length) {
+      setSelectedInvoiceTxns([]);
+    } else {
+      setSelectedInvoiceTxns(filteredInvoiceTxns.map((tx) => tx._id));
+    }
+  };
+
+  // selectedInvoiceTxnData: full transaction objects for currently selected _ids
+  const selectedInvoiceTxnData = invoiceTxnPool.filter((tx) =>
+    selectedInvoiceTxns.includes(tx._id)
+  );
+
+  // invoiceTotal: net value of selection — income adds, expenses subtract
+  const invoiceTotal = selectedInvoiceTxnData.reduce(
+    (sum, tx) => sum + (tx.isIncome ? tx.amount : -tx.amount),
+    0
+  );
+
+  // [E3.12] handlePrintBatchInvoice
+  // Generates a self-contained HTML invoice document and opens it in a popup window.
+  // The popup auto-prints on load (window.onload → window.print()) and auto-closes
+  // after the print dialog is dismissed (window.onafterprint → window.close()).
+  // This approach avoids printing the dashboard UI — only the invoice content is sent
+  // to the printer, completely isolated from the React app's DOM.
+  const handlePrintBatchInvoice = () => {
+    if (selectedInvoiceTxns.length === 0) {
+      toast.error("Please select at least one transaction to generate an invoice.");
+      return;
+    }
+
+    // Resolve full transaction objects from the selected IDs
+    const txns = invoiceTxnPool.filter((tx) => selectedInvoiceTxns.includes(tx._id));
+    const totalIncome = txns.filter((t) => t.isIncome).reduce((s, t) => s + t.amount, 0);
+    const totalExpenses = txns.filter((t) => !t.isIncome).reduce((s, t) => s + t.amount, 0);
+    const netAmount = txns.reduce((s, t) => s + (t.isIncome ? t.amount : -t.amount), 0);
+    const batchRef = `BATCH-${Date.now().toString().slice(-6)}`;
+    const today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+
+    const rows = txns.map((tx, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td>${new Date(tx.date || tx.createdAt).toLocaleDateString("en-GB")}</td>
+        <td><span class="badge">${tx.type}</span></td>
+        <td>${tx.description || "—"}</td>
+        <td style="color:${tx.isIncome ? "#10b981" : "#ef4444"}; font-weight:600;">${tx.isIncome ? "Income" : "Expense"}</td>
+        <td style="color:${tx.isIncome ? "#10b981" : "#ef4444"}; font-weight:700;">${tx.isIncome ? "+" : "-"} Rs. ${Number(tx.amount || 0).toLocaleString()}</td>
+      </tr>
+    `).join("");
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Transaction Invoice — ${batchRef}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #333; background: #fff; padding: 40px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
+    .company h2 { font-size: 1.4rem; color: #3b82f6; margin-bottom: 6px; }
+    .company p { font-size: 0.85rem; color: #555; line-height: 1.6; }
+    .invoice-meta { text-align: right; }
+    .invoice-meta h1 { font-size: 2rem; color: #3b82f6; letter-spacing: 2px; }
+    .invoice-meta p { font-size: 0.85rem; color: #777; margin-top: 4px; }
+    .details-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 30px; }
+    .details-grid h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.8px; color: #3b82f6; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
+    .details-grid p { font-size: 0.88rem; color: #555; line-height: 1.7; }
+    .details-grid strong { color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 0.88rem; }
+    thead { background: #f1f5f9; }
+    thead th { padding: 10px 12px; text-align: left; font-weight: 700; color: #374151; border-bottom: 2px solid #e5e7eb; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    tbody tr:nth-child(even) { background: #f9fafb; }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; color: #555; vertical-align: middle; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; background: #eff6ff; color: #3b82f6; font-size: 0.75rem; font-weight: 600; }
+    .totals { margin-left: auto; width: 320px; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+    .totals .row { display: flex; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #e5e7eb; font-size: 0.9rem; }
+    .totals .row:last-child { border-bottom: none; font-weight: 700; font-size: 1rem; background: #f1f5f9; }
+    .totals .income { color: #10b981; }
+    .totals .expense { color: #ef4444; }
+    .totals .net { color: ${netAmount >= 0 ? "#10b981" : "#ef4444"}; }
+    footer { margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 16px; text-align: center; font-size: 0.8rem; color: #888; }
+    @media print {
+      body { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="company">
+      <h2>Methsara Publications</h2>
+      <p>No. 123, Main Street<br/>Colombo, Sri Lanka<br/>Phone: +94 11 234 5678<br/>info@methsarapublications.com</p>
+    </div>
+    <div class="invoice-meta">
+      <h1>INVOICE</h1>
+      <p>#${batchRef}</p>
+      <p style="margin-top:8px;">Generated: ${today}</p>
+    </div>
+  </div>
+
+  <div class="details-grid">
+    <div>
+      <h4>Prepared By</h4>
+      <p><strong>Finance Manager</strong><br/>Methsara Publications</p>
+    </div>
+    <div>
+      <h4>Summary</h4>
+      <p>Transactions: <strong>${txns.length}</strong><br/>
+      Type: <strong>${invoiceFilters.type}</strong><br/>
+      Direction: <strong>${invoiceFilters.direction}</strong></p>
+    </div>
+    <div>
+      <h4>Date Range</h4>
+      <p>From: <strong>${invoiceFilters.dateFrom || "All time"}</strong><br/>
+      To: <strong>${invoiceFilters.dateTo || "Present"}</strong></p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Direction</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+
+  <div class="totals">
+    <div class="row"><span>Total Income</span><span class="income">+ Rs. ${totalIncome.toLocaleString()}</span></div>
+    <div class="row"><span>Total Expenses</span><span class="expense">- Rs. ${totalExpenses.toLocaleString()}</span></div>
+    <div class="row"><span>Net Amount</span><span class="net">${netAmount >= 0 ? "+" : ""}Rs. ${netAmount.toLocaleString()}</span></div>
+  </div>
+
+  <footer>
+    <p>This is an official financial transaction report generated by Methsara Publications Finance System.</p>
+    <p>Keep this document for auditing, reconciliation, and tax purposes.</p>
+  </footer>
+
+  <script>
+    window.onload = function() {
+      window.print();
+      window.onafterprint = function() { window.close(); };
+    };
+  </script>
+</body>
+</html>`;
+
+    const popup = window.open("", "_blank", "width=900,height=700");
+    if (!popup) {
+      toast.error("Pop-up blocked. Please allow pop-ups for this site and try again.");
+      return;
+    }
+    popup.document.open();
+    popup.document.write(html);
+    popup.document.close();
+  };
+
+  const uniqueTxnTypes = [
+    "All",
+    ...Array.from(new Set(invoiceTxnPool.map((tx) => tx.type))).filter(Boolean),
+  ];
 
   // Event Handlers
   const handleSaveTax = () => {
@@ -285,7 +508,8 @@ const FinanceManagerDashboard = () => {
       if (dashRes.status === "fulfilled") {
         const pendingBankTransfers = allOrders.filter(
           (o) =>
-            o.paymentMethod === "Bank Transfer" && o.paymentStatus === "Pending",
+            o.paymentMethod === "Bank Transfer" &&
+            o.paymentStatus === "Pending",
         ).length;
         setStats((prev) => ({
           ...prev,
@@ -623,15 +847,20 @@ const FinanceManagerDashboard = () => {
   // Opens the bank slip in an in-page popup modal.
   const handleViewSlip = (dataUrl) => setSlipViewerUrl(dataUrl);
 
-  const filteredRecentTransactions = recentTransactions.filter((tx) =>
-    (tx.description || "").toLowerCase().includes(recentSearchQuery.toLowerCase()) ||
-    (tx.type || "").toLowerCase().includes(recentSearchQuery.toLowerCase())
+  const filteredRecentTransactions = recentTransactions.filter(
+    (tx) =>
+      (tx.description || "")
+        .toLowerCase()
+        .includes(recentSearchQuery.toLowerCase()) ||
+      (tx.type || "").toLowerCase().includes(recentSearchQuery.toLowerCase()),
   );
-  
-  const totalRecentPages = Math.ceil(filteredRecentTransactions.length / RECENT_ITEMS_PER_PAGE);
+
+  const totalRecentPages = Math.ceil(
+    filteredRecentTransactions.length / RECENT_ITEMS_PER_PAGE,
+  );
   const paginatedRecentTransactions = filteredRecentTransactions.slice(
     (recentCurrentPage - 1) * RECENT_ITEMS_PER_PAGE,
-    recentCurrentPage * RECENT_ITEMS_PER_PAGE
+    recentCurrentPage * RECENT_ITEMS_PER_PAGE,
   );
 
   useEffect(() => {
@@ -832,6 +1061,31 @@ const FinanceManagerDashboard = () => {
               Configure <ChevronRight size={16} />
             </div>
           </div>
+
+          {/* Generate Invoices card */}
+          <div
+            className="dashboard-card action-card"
+            onClick={() => {
+              setActiveTab("invoices");
+              const el = document.getElementById("invoice-generator-section");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }}
+            style={{ cursor: "pointer" }}
+          >
+            <div
+              className="action-icon"
+              style={{ background: "rgba(20,184,166,0.1)", color: "#14B8A6" }}
+            >
+              <Download size={24} />
+            </div>
+            <h3 style={{ fontSize: "1.05rem", marginBottom: "6px" }}>
+              Generate Invoices
+            </h3>
+            <p style={{ fontSize: "0.85rem" }}>Create &amp; print transaction invoices</p>
+            <div className="action-link" style={{ marginTop: "auto" }}>
+              Open Generator <ChevronRight size={16} />
+            </div>
+          </div>
         </div>
       </DashboardSection>
 
@@ -894,6 +1148,11 @@ const FinanceManagerDashboard = () => {
             label: "Payment Confirmation",
             icon: <CreditCard size={15} />,
             count: stats.pendingBankTransfers,
+          },
+          {
+            key: "invoices",
+            label: "Invoice Generator",
+            icon: <Download size={15} />,
           },
           { key: "overview", label: "Overview", icon: <Activity size={15} /> },
         ].map(({ key, label, icon, count }) => (
@@ -1059,6 +1318,292 @@ const FinanceManagerDashboard = () => {
         </div>
       )}
 
+      {/* ── INVOICE GENERATOR TAB ── */}
+      {activeTab === "invoices" && (
+        <div className="dashboard-card" id="invoice-generator-section" style={{ marginTop: "20px" }}>
+          <div className="dashboard-card-header" style={{ flexWrap: "wrap", gap: "1rem" }}>
+            <h2 className="card-title" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Download size={20} style={{ color: "#14B8A6" }} />
+              Transaction Invoice Generator
+            </h2>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                {selectedInvoiceTxns.length} selected
+                {selectedInvoiceTxns.length > 0 && (
+                  <span style={{ color: invoiceTotal >= 0 ? "#10b981" : "#ef4444", fontWeight: 600, marginLeft: "6px" }}>
+                    (Net: {invoiceTotal >= 0 ? "+" : ""}Rs. {Math.abs(invoiceTotal).toLocaleString()})
+                  </span>
+                )}
+              </span>
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => setSelectedInvoiceTxns([])}
+                disabled={selectedInvoiceTxns.length === 0}
+              >
+                Clear
+              </button>
+              <button
+                className="btn btn-primary btn-sm"
+                style={{ background: selectedInvoiceTxns.length === 0 ? undefined : "#14B8A6", borderColor: "#14B8A6", display: "flex", alignItems: "center", gap: "6px" }}
+                onClick={handlePrintBatchInvoice}
+                disabled={selectedInvoiceTxns.length === 0}
+              >
+                <Printer size={14} /> Generate Invoice
+              </button>
+            </div>
+          </div>
+
+          {/* Filters Row */}
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              flexWrap: "wrap",
+              padding: "12px 0 16px",
+              borderBottom: "1px solid var(--border-color)",
+              marginBottom: "12px",
+              alignItems: "flex-end",
+            }}
+          >
+            <div>
+              <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>Type</label>
+              <select
+                value={invoiceFilters.type}
+                onChange={(e) => setInvoiceFilters((p) => ({ ...p, type: e.target.value }))}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--border-color)",
+                  background: "var(--bg-color)",
+                  color: "var(--text-color)",
+                  fontSize: "0.85rem",
+                  outline: "none",
+                  minWidth: "140px",
+                }}
+              >
+                {uniqueTxnTypes.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>Direction</label>
+              <select
+                value={invoiceFilters.direction}
+                onChange={(e) => setInvoiceFilters((p) => ({ ...p, direction: e.target.value }))}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--border-color)",
+                  background: "var(--bg-color)",
+                  color: "var(--text-color)",
+                  fontSize: "0.85rem",
+                  outline: "none",
+                  minWidth: "120px",
+                }}
+              >
+                <option value="All">All</option>
+                <option value="Income">Income (+)</option>
+                <option value="Expense">Expense (-)</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>From Date</label>
+              <input
+                type="date"
+                value={invoiceFilters.dateFrom}
+                onChange={(e) => setInvoiceFilters((p) => ({ ...p, dateFrom: e.target.value }))}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--border-color)",
+                  background: "var(--bg-color)",
+                  color: "var(--text-color)",
+                  fontSize: "0.85rem",
+                  outline: "none",
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>To Date</label>
+              <input
+                type="date"
+                value={invoiceFilters.dateTo}
+                onChange={(e) => setInvoiceFilters((p) => ({ ...p, dateTo: e.target.value }))}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--border-color)",
+                  background: "var(--bg-color)",
+                  color: "var(--text-color)",
+                  fontSize: "0.85rem",
+                  outline: "none",
+                }}
+              />
+            </div>
+
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => setInvoiceFilters({ type: "All", direction: "All", dateFrom: "", dateTo: "" })}
+              style={{ alignSelf: "flex-end" }}
+            >
+              Reset Filters
+            </button>
+          </div>
+
+          {/* Transactions Table with checkboxes */}
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th style={{ width: "40px" }}>
+                    <input
+                      type="checkbox"
+                      checked={
+                        filteredInvoiceTxns.length > 0 &&
+                        selectedInvoiceTxns.length === filteredInvoiceTxns.length
+                      }
+                      onChange={toggleAllInvoiceTxns}
+                      style={{ width: "16px", height: "16px", accentColor: "#14B8A6", cursor: "pointer" }}
+                    />
+                  </th>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                  <th>Direction</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredInvoiceTxns.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="text-center py-4">
+                      <div className="empty-state">
+                        <FileText size={40} style={{ opacity: 0.2, marginBottom: "8px" }} />
+                        <p>No transactions match your filters.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredInvoiceTxns.map((tx) => {
+                    const isSelected = selectedInvoiceTxns.includes(tx._id);
+                    return (
+                      <tr
+                        key={tx._id}
+                        onClick={() => toggleInvoiceTxn(tx._id)}
+                        style={{
+                          cursor: "pointer",
+                          background: isSelected ? "rgba(20,184,166,0.07)" : undefined,
+                          borderLeft: isSelected ? "3px solid #14B8A6" : "3px solid transparent",
+                          transition: "background 0.15s",
+                        }}
+                      >
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleInvoiceTxn(tx._id)}
+                            style={{ width: "16px", height: "16px", accentColor: "#14B8A6", cursor: "pointer" }}
+                          />
+                        </td>
+                        <td style={{ fontSize: "0.85rem" }}>
+                          {new Date(tx.date || tx.createdAt).toLocaleDateString()}
+                        </td>
+                        <td>
+                          <span className="role-badge">{tx.type}</span>
+                        </td>
+                        <td style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                          {tx.description || "—"}
+                        </td>
+                        <td>
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontSize: "0.8rem",
+                              fontWeight: 600,
+                              color: tx.isIncome ? "#10b981" : "#ef4444",
+                            }}
+                          >
+                            {tx.isIncome ? "▲ Income" : "▼ Expense"}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontWeight: 600, color: tx.isIncome ? "#10b981" : "#ef4444" }}>
+                            {tx.isIncome ? "+" : "-"} Rs. {Number(tx.amount || 0).toLocaleString()}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`status-badge ${tx.status === "Completed" || tx.status === "Paid" ? "success" : tx.status === "Pending" ? "warning" : "error"}`}>
+                            {tx.status || "Completed"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Selection summary */}
+          {selectedInvoiceTxns.length > 0 && (
+            <div
+              style={{
+                marginTop: "16px",
+                padding: "16px",
+                borderRadius: "12px",
+                background: "rgba(20,184,166,0.07)",
+                border: "1px solid rgba(20,184,166,0.25)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "1rem",
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 600, color: "var(--text-color)", fontSize: "0.95rem", marginBottom: "4px" }}>
+                  {selectedInvoiceTxns.length} transaction{selectedInvoiceTxns.length > 1 ? "s" : ""} selected
+                </div>
+                <div style={{ display: "flex", gap: "20px", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                  <span>
+                    Income:{" "}
+                    <strong style={{ color: "#10b981" }}>
+                      Rs. {selectedInvoiceTxnData.filter((t) => t.isIncome).reduce((s, t) => s + t.amount, 0).toLocaleString()}
+                    </strong>
+                  </span>
+                  <span>
+                    Expenses:{" "}
+                    <strong style={{ color: "#ef4444" }}>
+                      Rs. {selectedInvoiceTxnData.filter((t) => !t.isIncome).reduce((s, t) => s + t.amount, 0).toLocaleString()}
+                    </strong>
+                  </span>
+                  <span>
+                    Net:{" "}
+                    <strong style={{ color: invoiceTotal >= 0 ? "#10b981" : "#ef4444" }}>
+                      {invoiceTotal >= 0 ? "+" : ""}Rs. {invoiceTotal.toLocaleString()}
+                    </strong>
+                  </span>
+                </div>
+              </div>
+              <button
+                className="btn btn-primary"
+                style={{ background: "#14B8A6", borderColor: "#14B8A6", display: "flex", alignItems: "center", gap: "8px" }}
+                onClick={handlePrintBatchInvoice}
+              >
+                <Printer size={16} /> Generate & Print Invoice
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Analytics Charts */}
       <div className="dashboard-grid dashboard-grid-2" id="analytics-section">
         <div className="dashboard-card">
@@ -1083,9 +1628,18 @@ const FinanceManagerDashboard = () => {
 
       {/* Recent Transactions */}
       <div className="dashboard-card" id="transactions-section">
-        <div className="dashboard-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div
+          className="dashboard-card-header"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "1rem",
+          }}
+        >
           <h2 className="card-title">Recent Transactions</h2>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             <button
               className="btn btn-primary btn-sm"
               onClick={() => {
@@ -1102,11 +1656,11 @@ const FinanceManagerDashboard = () => {
                 value={recentSearchQuery}
                 onChange={(e) => setRecentSearchQuery(e.target.value)}
                 style={{
-                  padding: '6px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--border-color)',
-                  outline: 'none',
-                  fontSize: '0.85rem'
+                  padding: "6px 12px",
+                  borderRadius: "6px",
+                  border: "1px solid var(--border-color)",
+                  outline: "none",
+                  fontSize: "0.85rem",
                 }}
               />
             </div>
@@ -1198,6 +1752,15 @@ const FinanceManagerDashboard = () => {
                           <>
                             <button
                               className="btn-icon"
+                              title="Generate Invoice"
+                              onClick={() =>
+                                setSelectedFinancialTransaction(tx.originalData)
+                              }
+                            >
+                              <FileText size={16} />
+                            </button>
+                            <button
+                              className="btn-icon"
                               title="Edit Transaction"
                               onClick={() => {
                                 setEditingFinItem(tx.originalData);
@@ -1215,7 +1778,7 @@ const FinanceManagerDashboard = () => {
               )}
             </tbody>
           </table>
-          
+
           {totalRecentPages > 1 && (
             <div
               className="pagination-container"
@@ -1225,7 +1788,7 @@ const FinanceManagerDashboard = () => {
                 justifyContent: "center",
                 gap: "0.5rem",
                 marginTop: "1.5rem",
-                marginBottom: "0.5rem"
+                marginBottom: "0.5rem",
               }}
             >
               <button
@@ -1236,7 +1799,9 @@ const FinanceManagerDashboard = () => {
               >
                 &larr;
               </button>
-              <div style={{ display: "flex", gap: "0.25rem", fontSize: "0.9rem" }}>
+              <div
+                style={{ display: "flex", gap: "0.25rem", fontSize: "0.9rem" }}
+              >
                 Page {recentCurrentPage} of {totalRecentPages}
               </div>
               <button
@@ -1245,7 +1810,9 @@ const FinanceManagerDashboard = () => {
                   setRecentCurrentPage((p) => Math.min(totalRecentPages, p + 1))
                 }
                 disabled={recentCurrentPage === totalRecentPages}
-                style={{ opacity: recentCurrentPage === totalRecentPages ? 0.5 : 1 }}
+                style={{
+                  opacity: recentCurrentPage === totalRecentPages ? 0.5 : 1,
+                }}
               >
                 &rarr;
               </button>
@@ -1256,6 +1823,12 @@ const FinanceManagerDashboard = () => {
       {selectedOrder && (
         <Invoice order={selectedOrder} onClose={() => setSelectedOrder(null)} />
       )}
+      {selectedFinancialTransaction && (
+        <TransactionInvoice
+          transaction={selectedFinancialTransaction}
+          onClose={() => setSelectedFinancialTransaction(null)}
+        />
+      )}
 
       {/* Tax Configuration Modal */}
       <Modal
@@ -1264,31 +1837,59 @@ const FinanceManagerDashboard = () => {
         title="Tax Configuration"
         size="md"
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}
+        >
           {/* Header info */}
-          <div style={{ background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: "12px", padding: "1rem", fontSize: "0.85rem", color: "var(--primary-color)", display: "flex", alignItems: "flex-start", gap: "10px" }}>
+          <div
+            style={{
+              background: "rgba(59,130,246,0.1)",
+              border: "1px solid rgba(59,130,246,0.2)",
+              borderRadius: "12px",
+              padding: "1rem",
+              fontSize: "0.85rem",
+              color: "var(--primary-color)",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px",
+            }}
+          >
             <Settings size={18} style={{ flexShrink: 0, marginTop: "2px" }} />
             <div>
-              <strong style={{ display: "block", marginBottom: "4px" }}>Local Tax Settings</strong>
-              Tax settings are stored locally and instantly applied to all future manual invoice calculations.
+              <strong style={{ display: "block", marginBottom: "4px" }}>
+                Local Tax Settings
+              </strong>
+              Tax settings are stored locally and instantly applied to all
+              future manual invoice calculations.
             </div>
           </div>
 
           <div style={{ padding: "0 4px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem", marginBottom: "1.5rem" }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "1.25rem",
+                marginBottom: "1.5rem",
+              }}
+            >
               <Input
                 label="Tax Name"
                 type="text"
                 placeholder="e.g. VAT, GST"
                 value={tempTaxConfig.taxName}
-                onChange={(e) => setTempTaxConfig((p) => ({ ...p, taxName: e.target.value })) }
+                onChange={(e) =>
+                  setTempTaxConfig((p) => ({ ...p, taxName: e.target.value }))
+                }
               />
               <Input
                 label="Reg. Number (Optional)"
                 type="text"
                 placeholder="e.g. VAT-123456"
                 value={tempTaxConfig.taxNumber}
-                onChange={(e) => setTempTaxConfig((p) => ({ ...p, taxNumber: e.target.value })) }
+                onChange={(e) =>
+                  setTempTaxConfig((p) => ({ ...p, taxNumber: e.target.value }))
+                }
               />
             </div>
 
@@ -1297,11 +1898,14 @@ const FinanceManagerDashboard = () => {
               <Input
                 label="Default Tax Rate (%)"
                 type="number"
-                min="0" max="100" step="0.1"
+                min="0"
+                max="100"
+                step="0.1"
                 value={tempTaxConfig.vatRate}
                 onChange={(e) => {
                   const v = e.target.value;
-                  if (v !== "" && (parseFloat(v) < 0 || parseFloat(v) > 100)) return;
+                  if (v !== "" && (parseFloat(v) < 0 || parseFloat(v) > 100))
+                    return;
                   setTempTaxConfig((p) => ({ ...p, vatRate: v }));
                 }}
                 helperText={`Example: Tax on Rs. 10,000 → Rs. ${((10000 * (parseFloat(tempTaxConfig.vatRate) || 0)) / 100).toLocaleString()}`}
@@ -1309,22 +1913,65 @@ const FinanceManagerDashboard = () => {
             </div>
 
             {/* Apply-to toggles */}
-            <div style={{ background: "var(--bg-color)", borderRadius: "12px", border: "1px solid var(--border-color)", padding: "1.25rem" }}>
-              <p style={{ fontWeight: "600", fontSize: "0.9rem", marginBottom: "1rem", color: "var(--text-color)" }}>
+            <div
+              style={{
+                background: "var(--bg-color)",
+                borderRadius: "12px",
+                border: "1px solid var(--border-color)",
+                padding: "1.25rem",
+              }}
+            >
+              <p
+                style={{
+                  fontWeight: "600",
+                  fontSize: "0.9rem",
+                  marginBottom: "1rem",
+                  color: "var(--text-color)",
+                }}
+              >
                 Apply Tax To:
               </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.75rem",
+                }}
+              >
                 {[
                   { key: "applyToInvoices", label: "Customer Invoices" },
                   { key: "applyToSalaries", label: "Salary Transactions" },
-                  { key: "applyToSupplierPayments", label: "Supplier Payments" },
+                  {
+                    key: "applyToSupplierPayments",
+                    label: "Supplier Payments",
+                  },
                 ].map(({ key, label }) => (
-                  <label key={key} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "0.9rem", color: "var(--text-secondary)" }}>
+                  <label
+                    key={key}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      cursor: "pointer",
+                      fontSize: "0.9rem",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={tempTaxConfig[key]}
-                      onChange={(e) => setTempTaxConfig((p) => ({ ...p, [key]: e.target.checked }))}
-                      style={{ width: "18px", height: "18px", accentColor: "var(--primary-color)", borderRadius: "4px" }}
+                      onChange={(e) =>
+                        setTempTaxConfig((p) => ({
+                          ...p,
+                          [key]: e.target.checked,
+                        }))
+                      }
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                        accentColor: "var(--primary-color)",
+                        borderRadius: "4px",
+                      }}
                     />
                     {label}
                   </label>
@@ -1334,7 +1981,14 @@ const FinanceManagerDashboard = () => {
           </div>
 
           {/* Footer Actions */}
-          <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end", marginTop: "0.5rem" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "1rem",
+              justifyContent: "flex-end",
+              marginTop: "0.5rem",
+            }}
+          >
             <Button variant="outline" onClick={() => setShowTaxModal(false)}>
               Cancel
             </Button>
@@ -1352,105 +2006,361 @@ const FinanceManagerDashboard = () => {
         title="Staff Salary & Bonus Management"
         className="modal-xl"
       >
-        <div style={{ padding: "8px 4px", maxHeight: "65vh", overflowY: "auto" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {staff.filter((m) => m.role?.toLowerCase() !== "admin" && m.name !== "Admin User").length === 0 && (
-              <div style={{ textAlign: "center", padding: "2rem", color: "var(--text-secondary)" }}>
+        <div
+          style={{ padding: "8px 4px", maxHeight: "65vh", overflowY: "auto" }}
+        >
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+          >
+            {staff.filter(
+              (m) =>
+                m.role?.toLowerCase() !== "admin" && m.name !== "Admin User",
+            ).length === 0 && (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "2rem",
+                  color: "var(--text-secondary)",
+                }}
+              >
                 No staff members found.
               </div>
             )}
-            {staff.filter((m) => m.role?.toLowerCase() !== "admin" && m.name !== "Admin User").map((member) => {
-              const isPaidThisMonth = allFinancialTransactions.some((t) => {
-                if (t.type !== "Salary") return false;
-                const tid = t.relatedId?._id || t.relatedId;
-                if (tid !== member._id) return false;
-                const transDate = new Date(t.date || t.createdAt);
-                const now = new Date();
+            {staff
+              .filter(
+                (m) =>
+                  m.role?.toLowerCase() !== "admin" && m.name !== "Admin User",
+              )
+              .map((member) => {
+                const isPaidThisMonth = allFinancialTransactions.some((t) => {
+                  if (t.type !== "Salary") return false;
+                  const tid = t.relatedId?._id || t.relatedId;
+                  if (tid !== member._id) return false;
+                  const transDate = new Date(t.date || t.createdAt);
+                  const now = new Date();
+                  return (
+                    transDate.getMonth() === now.getMonth() &&
+                    transDate.getFullYear() === now.getFullYear()
+                  );
+                });
+
                 return (
-                  transDate.getMonth() === now.getMonth() &&
-                  transDate.getFullYear() === now.getFullYear()
-                );
-              });
-
-              return (
-                <div key={member._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: "var(--card-bg)", borderRadius: "12px", border: "1px solid var(--border-color)", gap: "1.5rem", transition: "border-color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--primary-color)"} onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--border-color)"}>
-                  
-                  {/* Info */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: "1.5", minWidth: "180px" }}>
-                    <div style={{ width: "42px", height: "42px", borderRadius: "12px", backgroundColor: "rgba(59,130,246,0.15)", color: "#3B82F6", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "600", fontSize: "1.2rem" }}>
-                      {member.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: "600", color: "var(--text-color)", fontSize: "0.95rem", marginBottom: "2px" }}>{member.name}</div>
-                      <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{member.email}</div>
-                    </div>
-                  </div>
-
-                  {/* Role */}
-                  <div style={{ flex: "1", minWidth: "120px" }}>
-                    <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: "6px", background: "var(--bg-color)", border: "1px solid var(--border-color)", color: "var(--text-secondary)", fontSize: "0.8rem", fontWeight: "500", letterSpacing: "0.3px" }}>
-                      {member.role.replace(/_/g, " ")}
-                    </span>
-                  </div>
-
-                  {/* Salary section */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: "1.2", minWidth: "150px" }}>
-                    <div style={{ position: "relative" }}>
-                      <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)", fontSize: "0.85rem", pointerEvents: "none", fontWeight: "500" }}>Rs.</span>
-                      <input
-                        type="number"
-                        style={{ width: "115px", paddingLeft: "32px", paddingRight: "8px", height: "36px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", color: "var(--text-color)", outline: "none", fontSize: "0.9rem", transition: "all 0.2s", fontWeight: "500" }}
-                        placeholder="0"
-                        min="0" step="1"
-                        value={salaryInputs[member._id] || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val !== "" && parseFloat(val) < 0) return;
-                          setSalaryInputs({ ...salaryInputs, [member._id]: val });
+                  <div
+                    key={member._id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "16px",
+                      background: "var(--card-bg)",
+                      borderRadius: "12px",
+                      border: "1px solid var(--border-color)",
+                      gap: "1.5rem",
+                      transition: "border-color 0.2s",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.borderColor =
+                        "var(--primary-color)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.borderColor =
+                        "var(--border-color)")
+                    }
+                  >
+                    {/* Info */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        flex: "1.5",
+                        minWidth: "180px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "42px",
+                          height: "42px",
+                          borderRadius: "12px",
+                          backgroundColor: "rgba(59,130,246,0.15)",
+                          color: "#3B82F6",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: "600",
+                          fontSize: "1.2rem",
                         }}
-                        onFocus={(e) => e.target.style.borderColor = "var(--primary-color)"}
-                        onBlur={(e) => e.target.style.borderColor = "var(--border-color)"}
-                      />
+                      >
+                        {member.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div
+                          style={{
+                            fontWeight: "600",
+                            color: "var(--text-color)",
+                            fontSize: "0.95rem",
+                            marginBottom: "2px",
+                          }}
+                        >
+                          {member.name}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "0.8rem",
+                            color: "var(--text-secondary)",
+                          }}
+                        >
+                          {member.email}
+                        </div>
+                      </div>
                     </div>
-                    <button title="Update Base Salary" className="btn-icon" onClick={() => handleUpdateStaffSalary(member._id)} style={{ width: "36px", height: "36px", border: "1px solid var(--border-color)", borderRadius: "8px", background: "var(--bg-color)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-secondary)", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.color = "var(--primary-color)"; e.currentTarget.style.borderColor = "var(--primary-color)"; }} onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; e.currentTarget.style.borderColor = "var(--border-color)"; }}>
-                      <Settings size={16} />
-                    </button>
-                  </div>
 
-                  {/* Salary Action section */}
-                  <div style={{ flex: "1", minWidth: "130px" }}>
-                    {isPaidThisMonth ? (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "var(--success-color)", fontSize: "0.85rem", fontWeight: "600", padding: "6px 0" }}>
-                        <CheckCircle size={16} /> Paid This Month
+                    {/* Role */}
+                    <div style={{ flex: "1", minWidth: "120px" }}>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          padding: "4px 10px",
+                          borderRadius: "6px",
+                          background: "var(--bg-color)",
+                          border: "1px solid var(--border-color)",
+                          color: "var(--text-secondary)",
+                          fontSize: "0.8rem",
+                          fontWeight: "500",
+                          letterSpacing: "0.3px",
+                        }}
+                      >
+                        {member.role.replace(/_/g, " ")}
                       </span>
-                    ) : (
-                      <button style={{ height: "36px", padding: "0 16px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "600", border: "1px solid var(--primary-color)", color: "var(--primary-color)", background: "transparent", cursor: "pointer", transition: "all 0.2s" }} onClick={() => handlePaySalary(member._id)} onMouseOver={(e) => { e.currentTarget.style.background = "var(--primary-color)"; e.currentTarget.style.color = "white"; }} onMouseOut={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--primary-color)"; }}>
-                        Pay Salary
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Bonus Action section */}
-                  <div style={{ flex: "1.5", display: "flex", alignItems: "center", gap: "8px", justifyContent: "flex-end", minWidth: "180px" }}>
-                    <div style={{ position: "relative" }}>
-                      <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)", fontSize: "0.85rem", pointerEvents: "none", fontWeight: "500" }}>Rs.</span>
-                      <input
-                        type="number"
-                        style={{ width: "105px", paddingLeft: "32px", paddingRight: "8px", height: "36px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", color: "var(--text-color)", outline: "none", fontSize: "0.9rem", transition: "all 0.2s", fontWeight: "500" }}
-                        placeholder="Bonus"
-                        value={bonusInputs[member._id] || ""}
-                        onChange={(e) => setBonusInputs({ ...bonusInputs, [member._id]: e.target.value })}
-                        onFocus={(e) => e.target.style.borderColor = "var(--primary-color)"}
-                        onBlur={(e) => e.target.style.borderColor = "var(--border-color)"}
-                      />
                     </div>
-                    <button style={{ height: "36px", padding: "0 16px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "600", border: "none", background: "var(--primary-color)", color: "white", cursor: "pointer", transition: "opacity 0.2s" }} onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"} onMouseOut={(e) => e.currentTarget.style.opacity = "1"} onClick={() => handlePayBonus(member._id)}>
-                      Send
-                    </button>
+
+                    {/* Salary section */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        flex: "1.2",
+                        minWidth: "150px",
+                      }}
+                    >
+                      <div style={{ position: "relative" }}>
+                        <span
+                          style={{
+                            position: "absolute",
+                            left: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "var(--text-secondary)",
+                            fontSize: "0.85rem",
+                            pointerEvents: "none",
+                            fontWeight: "500",
+                          }}
+                        >
+                          Rs.
+                        </span>
+                        <input
+                          type="number"
+                          style={{
+                            width: "115px",
+                            paddingLeft: "32px",
+                            paddingRight: "8px",
+                            height: "36px",
+                            borderRadius: "8px",
+                            border: "1px solid var(--border-color)",
+                            background: "var(--bg-color)",
+                            color: "var(--text-color)",
+                            outline: "none",
+                            fontSize: "0.9rem",
+                            transition: "all 0.2s",
+                            fontWeight: "500",
+                          }}
+                          placeholder="0"
+                          min="0"
+                          step="1"
+                          value={salaryInputs[member._id] || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val !== "" && parseFloat(val) < 0) return;
+                            setSalaryInputs({
+                              ...salaryInputs,
+                              [member._id]: val,
+                            });
+                          }}
+                          onFocus={(e) =>
+                            (e.target.style.borderColor =
+                              "var(--primary-color)")
+                          }
+                          onBlur={(e) =>
+                            (e.target.style.borderColor = "var(--border-color)")
+                          }
+                        />
+                      </div>
+                      <button
+                        title="Update Base Salary"
+                        className="btn-icon"
+                        onClick={() => handleUpdateStaffSalary(member._id)}
+                        style={{
+                          width: "36px",
+                          height: "36px",
+                          border: "1px solid var(--border-color)",
+                          borderRadius: "8px",
+                          background: "var(--bg-color)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          color: "var(--text-secondary)",
+                          transition: "all 0.2s",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = "var(--primary-color)";
+                          e.currentTarget.style.borderColor =
+                            "var(--primary-color)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = "var(--text-secondary)";
+                          e.currentTarget.style.borderColor =
+                            "var(--border-color)";
+                        }}
+                      >
+                        <Settings size={16} />
+                      </button>
+                    </div>
+
+                    {/* Salary Action section */}
+                    <div style={{ flex: "1", minWidth: "130px" }}>
+                      {isPaidThisMonth ? (
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            color: "var(--success-color)",
+                            fontSize: "0.85rem",
+                            fontWeight: "600",
+                            padding: "6px 0",
+                          }}
+                        >
+                          <CheckCircle size={16} /> Paid This Month
+                        </span>
+                      ) : (
+                        <button
+                          style={{
+                            height: "36px",
+                            padding: "0 16px",
+                            borderRadius: "8px",
+                            fontSize: "0.85rem",
+                            fontWeight: "600",
+                            border: "1px solid var(--primary-color)",
+                            color: "var(--primary-color)",
+                            background: "transparent",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                          }}
+                          onClick={() => handlePaySalary(member._id)}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.background =
+                              "var(--primary-color)";
+                            e.currentTarget.style.color = "white";
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = "transparent";
+                            e.currentTarget.style.color =
+                              "var(--primary-color)";
+                          }}
+                        >
+                          Pay Salary
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Bonus Action section */}
+                    <div
+                      style={{
+                        flex: "1.5",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        justifyContent: "flex-end",
+                        minWidth: "180px",
+                      }}
+                    >
+                      <div style={{ position: "relative" }}>
+                        <span
+                          style={{
+                            position: "absolute",
+                            left: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            color: "var(--text-secondary)",
+                            fontSize: "0.85rem",
+                            pointerEvents: "none",
+                            fontWeight: "500",
+                          }}
+                        >
+                          Rs.
+                        </span>
+                        <input
+                          type="number"
+                          style={{
+                            width: "105px",
+                            paddingLeft: "32px",
+                            paddingRight: "8px",
+                            height: "36px",
+                            borderRadius: "8px",
+                            border: "1px solid var(--border-color)",
+                            background: "var(--bg-color)",
+                            color: "var(--text-color)",
+                            outline: "none",
+                            fontSize: "0.9rem",
+                            transition: "all 0.2s",
+                            fontWeight: "500",
+                          }}
+                          placeholder="Bonus"
+                          value={bonusInputs[member._id] || ""}
+                          onChange={(e) =>
+                            setBonusInputs({
+                              ...bonusInputs,
+                              [member._id]: e.target.value,
+                            })
+                          }
+                          onFocus={(e) =>
+                            (e.target.style.borderColor =
+                              "var(--primary-color)")
+                          }
+                          onBlur={(e) =>
+                            (e.target.style.borderColor = "var(--border-color)")
+                          }
+                        />
+                      </div>
+                      <button
+                        style={{
+                          height: "36px",
+                          padding: "0 16px",
+                          borderRadius: "8px",
+                          fontSize: "0.85rem",
+                          fontWeight: "600",
+                          border: "none",
+                          background: "var(--primary-color)",
+                          color: "white",
+                          cursor: "pointer",
+                          transition: "opacity 0.2s",
+                        }}
+                        onMouseOver={(e) =>
+                          (e.currentTarget.style.opacity = "0.9")
+                        }
+                        onMouseOut={(e) =>
+                          (e.currentTarget.style.opacity = "1")
+                        }
+                        onClick={() => handlePayBonus(member._id)}
+                      >
+                        Send
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
       </Modal>
@@ -1505,50 +2415,216 @@ const FinanceManagerDashboard = () => {
                     No vendor payable records.
                   </p>
                 ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "1rem", maxHeight: "60vh", overflowY: "auto", paddingRight: "4px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
+                      marginTop: "1rem",
+                      maxHeight: "60vh",
+                      overflowY: "auto",
+                      paddingRight: "4px",
+                    }}
+                  >
                     {vendors.map((supplier) => (
-                      <div key={supplier._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", background: "var(--card-bg)", borderRadius: "12px", border: "1px solid var(--border-color)", gap: "1.5rem", transition: "border-color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--primary-color)"} onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--border-color)"}>
-                        
+                      <div
+                        key={supplier._id}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          padding: "16px",
+                          background: "var(--card-bg)",
+                          borderRadius: "12px",
+                          border: "1px solid var(--border-color)",
+                          gap: "1.5rem",
+                          transition: "border-color 0.2s",
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.borderColor =
+                            "var(--primary-color)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.borderColor =
+                            "var(--border-color)")
+                        }
+                      >
                         {/* Info */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: "1.5", minWidth: "200px" }}>
-                          <div style={{ width: "42px", height: "42px", borderRadius: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", color: "var(--danger-color)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "600", fontSize: "1.2rem" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            flex: "1.5",
+                            minWidth: "200px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "42px",
+                              height: "42px",
+                              borderRadius: "12px",
+                              backgroundColor: "rgba(239, 68, 68, 0.1)",
+                              color: "var(--danger-color)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontWeight: "600",
+                              fontSize: "1.2rem",
+                            }}
+                          >
                             {supplier.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div style={{ fontWeight: "600", color: "var(--text-color)", fontSize: "0.95rem", marginBottom: "2px", display: "flex", alignItems: "center", gap: "8px" }}>
+                            <div
+                              style={{
+                                fontWeight: "600",
+                                color: "var(--text-color)",
+                                fontSize: "0.95rem",
+                                marginBottom: "2px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                            >
                               {supplier.name}
-                              <span style={{ fontSize: "0.7rem", padding: "2px 6px", borderRadius: "4px", background: "rgba(239,68,68,0.1)", color: "var(--danger-color)", letterSpacing: "0.3px", fontWeight: "600" }}>
+                              <span
+                                style={{
+                                  fontSize: "0.7rem",
+                                  padding: "2px 6px",
+                                  borderRadius: "4px",
+                                  background: "rgba(239,68,68,0.1)",
+                                  color: "var(--danger-color)",
+                                  letterSpacing: "0.3px",
+                                  fontWeight: "600",
+                                }}
+                              >
                                 {supplier.category}
                               </span>
                             </div>
-                            <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>{supplier.contactPerson} • {supplier.paymentTerms} terms</div>
+                            <div
+                              style={{
+                                fontSize: "0.8rem",
+                                color: "var(--text-secondary)",
+                              }}
+                            >
+                              {supplier.contactPerson} • {supplier.paymentTerms}{" "}
+                              terms
+                            </div>
                           </div>
                         </div>
 
                         {/* Outstanding */}
                         <div style={{ flex: "1", minWidth: "140px" }}>
-                          <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.5px" }}>Outstanding</div>
-                          <div style={{ color: "var(--danger-color)", fontWeight: "700", fontSize: "1.05rem" }}>
-                            Rs. {(supplier.outstandingBalance || 0).toLocaleString()}
+                          <div
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "var(--text-secondary)",
+                              marginBottom: "4px",
+                              fontWeight: "500",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.5px",
+                            }}
+                          >
+                            Outstanding
+                          </div>
+                          <div
+                            style={{
+                              color: "var(--danger-color)",
+                              fontWeight: "700",
+                              fontSize: "1.05rem",
+                            }}
+                          >
+                            Rs.{" "}
+                            {(
+                              supplier.outstandingBalance || 0
+                            ).toLocaleString()}
                           </div>
                         </div>
 
                         {/* Settle Action */}
-                        <div style={{ flex: "1.2", display: "flex", alignItems: "center", gap: "8px", justifyContent: "flex-end", minWidth: "200px" }}>
+                        <div
+                          style={{
+                            flex: "1.2",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            justifyContent: "flex-end",
+                            minWidth: "200px",
+                          }}
+                        >
                           <div style={{ position: "relative" }}>
-                            <span style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)", fontSize: "0.85rem", pointerEvents: "none", fontWeight: "500" }}>Rs.</span>
+                            <span
+                              style={{
+                                position: "absolute",
+                                left: "10px",
+                                top: "50%",
+                                transform: "translateY(-50%)",
+                                color: "var(--text-secondary)",
+                                fontSize: "0.85rem",
+                                pointerEvents: "none",
+                                fontWeight: "500",
+                              }}
+                            >
+                              Rs.
+                            </span>
                             <input
                               type="number"
-                              style={{ width: "115px", paddingLeft: "32px", paddingRight: "8px", height: "36px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "var(--bg-color)", color: "var(--text-color)", outline: "none", fontSize: "0.9rem", transition: "all 0.2s", fontWeight: "500" }}
+                              style={{
+                                width: "115px",
+                                paddingLeft: "32px",
+                                paddingRight: "8px",
+                                height: "36px",
+                                borderRadius: "8px",
+                                border: "1px solid var(--border-color)",
+                                background: "var(--bg-color)",
+                                color: "var(--text-color)",
+                                outline: "none",
+                                fontSize: "0.9rem",
+                                transition: "all 0.2s",
+                                fontWeight: "500",
+                              }}
                               placeholder="Amount"
-                              min="0" step="1"
+                              min="0"
+                              step="1"
                               value={settleInputs[supplier._id] || ""}
-                              onChange={(e) => setSettleInputs({ ...settleInputs, [supplier._id]: e.target.value })}
-                              onFocus={(e) => e.target.style.borderColor = "var(--primary-color)"}
-                              onBlur={(e) => e.target.style.borderColor = "var(--border-color)"}
+                              onChange={(e) =>
+                                setSettleInputs({
+                                  ...settleInputs,
+                                  [supplier._id]: e.target.value,
+                                })
+                              }
+                              onFocus={(e) =>
+                                (e.target.style.borderColor =
+                                  "var(--primary-color)")
+                              }
+                              onBlur={(e) =>
+                                (e.target.style.borderColor =
+                                  "var(--border-color)")
+                              }
                             />
                           </div>
-                          <button style={{ height: "36px", padding: "0 16px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "600", border: "none", background: "var(--danger-color)", color: "white", cursor: "pointer", transition: "opacity 0.2s" }} onMouseOver={(e) => e.currentTarget.style.opacity = "0.9"} onMouseOut={(e) => e.currentTarget.style.opacity = "1"} onClick={() => handleSettleSupplier(supplier._id)}>
+                          <button
+                            style={{
+                              height: "36px",
+                              padding: "0 16px",
+                              borderRadius: "8px",
+                              fontSize: "0.85rem",
+                              fontWeight: "600",
+                              border: "none",
+                              background: "var(--danger-color)",
+                              color: "white",
+                              cursor: "pointer",
+                              transition: "opacity 0.2s",
+                            }}
+                            onMouseOver={(e) =>
+                              (e.currentTarget.style.opacity = "0.9")
+                            }
+                            onMouseOut={(e) =>
+                              (e.currentTarget.style.opacity = "1")
+                            }
+                            onClick={() => handleSettleSupplier(supplier._id)}
+                          >
                             Pay Vendor
                           </button>
                         </div>
@@ -1616,7 +2692,6 @@ const FinanceManagerDashboard = () => {
           </div>
         </div>
       </Modal>
-
 
       {/* Transaction Entry/Edit Modal */}
       <Modal

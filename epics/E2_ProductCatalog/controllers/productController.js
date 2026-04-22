@@ -26,6 +26,7 @@ exports.getProducts = async (req, res) => {
       maxPrice,
       sort,
       includeArchived,
+      language,
     } = req.query;
 
     // [E2.4] Build base query: only active, non-archived products unless admin requests archived
@@ -34,20 +35,52 @@ exports.getProducts = async (req, res) => {
       query.isArchived = { $ne: true };
     }
 
-    // [E2.4] Full-text search on title and ISBN using case-insensitive regex
+    const andConditions = [];
+
+    // [E2.4] [E2.11] Global search supports title/titleSinhala/ISBN and academic fields
+    // so one keyword can match books from anywhere in catalog metadata.
     if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { isbn: { $regex: search, $options: "i" } },
-      ];
+      andConditions.push({
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { titleSinhala: { $regex: search, $options: "i" } },
+          { author: { $regex: search, $options: "i" } },
+          { isbn: { $regex: search, $options: "i" } },
+          { subject: { $regex: search, $options: "i" } },
+          { category: { $regex: search, $options: "i" } },
+          { grade: { $regex: search, $options: "i" } },
+          { examType: { $regex: search, $options: "i" } },
+          { language: { $regex: search, $options: "i" } },
+        ],
+      });
     }
 
-    // [E2.5] Multi-value grade filter: supports comma-separated values for grade browsing page
+    // [E2.5] Multi-value grade filter: supports comma-separated values and A/L shorthand.
     if (grade) {
-      if (grade.includes(",")) {
-        query.grade = { $in: grade.split(",") };
-      } else {
-        query.grade = grade;
+      const selectedGrades = grade
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
+      const includesAL = selectedGrades.includes("A/L");
+      const directGrades = selectedGrades.filter((value) => value !== "A/L");
+      const gradeConditions = [];
+
+      if (directGrades.length > 0) {
+        gradeConditions.push({ grade: { $in: directGrades } });
+      }
+      if (includesAL) {
+        gradeConditions.push({
+          $or: [
+            { examType: "A/L" },
+            { grade: { $in: ["Grade 12", "Grade 13"] } },
+          ],
+        });
+      }
+
+      if (gradeConditions.length === 1) {
+        andConditions.push(gradeConditions[0]);
+      } else if (gradeConditions.length > 1) {
+        andConditions.push({ $or: gradeConditions });
       }
     }
 
@@ -69,11 +102,48 @@ exports.getProducts = async (req, res) => {
       query.examType = examType;
     }
 
+    // [E2.11] Filter by language (include bilingual books in single-language selections).
+    // Legacy catalog entries may not have `language` stored; treat those as English by default.
+    if (language === "English") {
+      andConditions.push({
+        $or: [
+          { language: { $in: ["English", "Both"] } },
+          { language: { $exists: false } },
+          { language: null },
+          { language: "" },
+        ],
+      });
+    } else if (language === "Sinhala") {
+      andConditions.push({
+        $or: [
+          { language: { $in: ["Sinhala", "Both"] } },
+          {
+            $and: [
+              {
+                $or: [
+                  { language: { $exists: false } },
+                  { language: null },
+                  { language: "" },
+                ],
+              },
+              { titleSinhala: { $exists: true, $ne: "" } },
+            ],
+          },
+        ],
+      });
+    } else if (language) {
+      andConditions.push({ language });
+    }
+
     // [E2.5] Price range filter for budget-conscious customers
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = Number(minPrice);
       if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+
+    if (andConditions.length > 0) {
+      query.$and = andConditions;
     }
 
     // [E2.4] Pagination: 12 items per page (grid-friendly); page number from query param

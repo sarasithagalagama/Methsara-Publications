@@ -51,11 +51,13 @@ const ProductList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { refreshCounts } = useAuth();
 
-  // [E2.4] [E2.5] Filters initialized from URL search params — enables shareable/bookmarkable filtered URLs
+  // [E2.4] [E2.5] [E2.11] Filters initialized from URL search params — enables shareable/bookmarkable filtered URLs
   // e.g. /books?category=A%2FL&sort=price_asc restores the exact filter state on load
   const [filters, setFilters] = useState({
     category: searchParams.get("category") || "",
+    grade: searchParams.get("grade") || "",
     subject: searchParams.get("subject") || "",
+    language: searchParams.get("language") || "",
     minPrice: searchParams.get("minPrice") || "",
     maxPrice: searchParams.get("maxPrice") || "",
     sort: searchParams.get("sort") || "newest", // [E2.7] Sort: newest/price_asc/price_desc/title
@@ -68,6 +70,28 @@ const ProductList = () => {
     totalItems: 0,
     limit: 12,
   });
+
+  // Keep filters in sync when query params are changed externally (e.g., header search).
+  useEffect(() => {
+    const nextFilters = {
+      category: searchParams.get("category") || "",
+      grade: searchParams.get("grade") || "",
+      subject: searchParams.get("subject") || "",
+      language: searchParams.get("language") || "",
+      minPrice: searchParams.get("minPrice") || "",
+      maxPrice: searchParams.get("maxPrice") || "",
+      sort: searchParams.get("sort") || "newest",
+      search: searchParams.get("search") || "",
+    };
+
+    setFilters((prev) => {
+      const changed = Object.keys(nextFilters).some(
+        (key) => prev[key] !== nextFilters[key],
+      );
+      return changed ? { ...prev, ...nextFilters } : prev;
+    });
+  }, [searchParams]);
+
   // searchDebounce ref holds the pending timeout ID so it can be cancelled on each new keystroke
   const searchDebounce = useRef(null);
 
@@ -136,7 +160,9 @@ const ProductList = () => {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
   }, [
     filters.category,
+    filters.grade,
     filters.subject,
+    filters.language,
     filters.minPrice,
     filters.maxPrice,
     filters.sort,
@@ -152,6 +178,8 @@ const ProductList = () => {
       const queryParams = new URLSearchParams();
       if (filters.search) queryParams.append("search", filters.search);
       if (filters.subject) queryParams.append("subject", filters.subject);
+      if (filters.grade) queryParams.append("grade", filters.grade);
+      if (filters.language) queryParams.append("language", filters.language);
       if (filters.sort) queryParams.append("sort", filters.sort);
       if (filters.minPrice) queryParams.append("minPrice", filters.minPrice);
       if (filters.maxPrice) queryParams.append("maxPrice", filters.maxPrice);
@@ -176,7 +204,7 @@ const ProductList = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, pagination.currentPage, pagination.limit]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -189,7 +217,9 @@ const ProductList = () => {
     setFilters({
       search: "",
       category: "",
+      grade: "",
       subject: "",
+      language: "",
       minPrice: "",
       maxPrice: "",
       sort: "newest",
@@ -297,7 +327,9 @@ const ProductList = () => {
   // Count active filters for the badge
   const activeFilterCount = [
     filters.category,
+    filters.grade,
     filters.subject,
+    filters.language,
     filters.minPrice,
     filters.maxPrice,
   ].filter(Boolean).length;
@@ -340,7 +372,7 @@ const ProductList = () => {
 
             {/* Category Filter */}
             <div className="filter-section">
-              <h4>GRADE</h4>
+              <h4>CATEGORY</h4>
               <div className="filter-options">
                 <button
                   className={`filter-btn ${!filters.category ? "active" : ""}`}
@@ -359,6 +391,96 @@ const ProductList = () => {
                     {cat.name}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Grade Filter */}
+            <div className="filter-section">
+              <h4>GRADE</h4>
+              <div className="filter-options">
+                <button
+                  className={`filter-btn ${!filters.grade ? "active" : ""}`}
+                  onClick={() => setFilters({ ...filters, grade: "" })}
+                >
+                  All Grades
+                </button>
+                <button
+                  className={`filter-btn ${filters.grade === "Grade 6" ? "active" : ""}`}
+                  onClick={() => setFilters({ ...filters, grade: "Grade 6" })}
+                >
+                  Grade 6
+                </button>
+                <button
+                  className={`filter-btn ${filters.grade === "Grade 7" ? "active" : ""}`}
+                  onClick={() => setFilters({ ...filters, grade: "Grade 7" })}
+                >
+                  Grade 7
+                </button>
+                <button
+                  className={`filter-btn ${filters.grade === "Grade 8" ? "active" : ""}`}
+                  onClick={() => setFilters({ ...filters, grade: "Grade 8" })}
+                >
+                  Grade 8
+                </button>
+                <button
+                  className={`filter-btn ${filters.grade === "Grade 9" ? "active" : ""}`}
+                  onClick={() => setFilters({ ...filters, grade: "Grade 9" })}
+                >
+                  Grade 9
+                </button>
+                <button
+                  className={`filter-btn ${filters.grade === "Grade 10" ? "active" : ""}`}
+                  onClick={() => setFilters({ ...filters, grade: "Grade 10" })}
+                >
+                  Grade 10
+                </button>
+                <button
+                  className={`filter-btn ${filters.grade === "Grade 11" ? "active" : ""}`}
+                  onClick={() => setFilters({ ...filters, grade: "Grade 11" })}
+                >
+                  Grade 11
+                </button>
+                <button
+                  className={`filter-btn ${filters.grade === "A/L" ? "active" : ""}`}
+                  onClick={() => setFilters({ ...filters, grade: "A/L" })}
+                >
+                  A/L
+                </button>
+              </div>
+            </div>
+
+            {/* Language Filter */}
+            <div className="filter-section">
+              <h4>LANGUAGE</h4>
+              <div className="filter-options">
+                <button
+                  className={`filter-btn ${!filters.language ? "active" : ""}`}
+                  onClick={() => setFilters({ ...filters, language: "" })}
+                >
+                  All Languages
+                </button>
+                <button
+                  className={`filter-btn ${filters.language === "English" ? "active" : ""}`}
+                  onClick={() =>
+                    setFilters({ ...filters, language: "English" })
+                  }
+                >
+                  English
+                </button>
+                <button
+                  className={`filter-btn ${filters.language === "Sinhala" ? "active" : ""}`}
+                  onClick={() =>
+                    setFilters({ ...filters, language: "Sinhala" })
+                  }
+                >
+                  Sinhala
+                </button>
+                <button
+                  className={`filter-btn ${filters.language === "Both" ? "active" : ""}`}
+                  onClick={() => setFilters({ ...filters, language: "Both" })}
+                >
+                  Both
+                </button>
               </div>
             </div>
 
@@ -400,7 +522,7 @@ const ProductList = () => {
                 <input
                   type="text"
                   name="search"
-                  placeholder="Search by title, author, or ISBN..."
+                  placeholder="Search by title, category, grade, language, subject..."
                   value={filters.search}
                   onChange={handleFilterChange}
                 />
@@ -444,15 +566,36 @@ const ProductList = () => {
             {(filters.grade ||
               filters.category ||
               filters.subject ||
+              filters.language ||
               filters.examType ||
               filters.minPrice ||
               filters.maxPrice) && (
               <div className="active-filters-row">
                 {filters.category && (
                   <span className="filter-pill">
-                    {filters.category}
+                    Category: {filters.category}
                     <button
                       onClick={() => setFilters({ ...filters, category: "" })}
+                    >
+                      <X size={12} strokeWidth={3} />
+                    </button>
+                  </span>
+                )}
+                {filters.grade && (
+                  <span className="filter-pill">
+                    Grade: {filters.grade}
+                    <button
+                      onClick={() => setFilters({ ...filters, grade: "" })}
+                    >
+                      <X size={12} strokeWidth={3} />
+                    </button>
+                  </span>
+                )}
+                {filters.language && (
+                  <span className="filter-pill">
+                    Language: {filters.language}
+                    <button
+                      onClick={() => setFilters({ ...filters, language: "" })}
                     >
                       <X size={12} strokeWidth={3} />
                     </button>
