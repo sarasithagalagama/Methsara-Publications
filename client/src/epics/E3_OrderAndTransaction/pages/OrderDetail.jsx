@@ -195,8 +195,9 @@ const OrderDetail = () => {
                     <div className="item-price">
                       Rs. {(item.price * item.quantity).toFixed(2)}
                     </div>
-                    {/* Write Review Button - only show if delivered and not already reviewed */}
+                    {/* Write Review Button - only show if delivered and not already reviewed and only for Products */}
                     {order.orderStatus === "Delivered" &&
+                      (!item.itemModel || item.itemModel === "Product") &&
                       item.product &&
                       (item.isReviewed ? (
                         <span
