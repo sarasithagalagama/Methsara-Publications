@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Auth Controller
 // Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
@@ -502,6 +502,35 @@ exports.deactivateUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error deactivating user",
+      error: error.message,
+    });
+  }
+};
+
+// Reactivate User (E1.10 - Admin only)
+exports.reactivateUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    user.isActive = true;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "User reactivated successfully",
+      data: user,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error reactivating user",
       error: error.message,
     });
   }

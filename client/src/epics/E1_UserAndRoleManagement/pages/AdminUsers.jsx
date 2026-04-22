@@ -160,6 +160,43 @@ const AdminUsers = () => {
     });
   };
 
+  const handleReactivateUser = (userId) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Reactivate User?",
+      message:
+        "Are you sure you want to reactivate this user account? They will be able to log in to the system again.",
+      variant: "primary",
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem("token");
+          await axios.put(
+            `/api/auth/users/${userId}/reactivate`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+          fetchUsers();
+          setStatusModal({
+            isOpen: true,
+            type: "success",
+            title: "User Reactivated",
+            message: "The user has been successfully reactivated.",
+          });
+        } catch (error) {
+          console.error("Error reactivating user:", error);
+          setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+          setStatusModal({
+            isOpen: true,
+            type: "error",
+            title: "Action Failed",
+            message: "Failed to reactivate user. Please try again.",
+          });
+        }
+      },
+    });
+  };
+
   const handleEditClick = (user) => {
     setEditingUser(user);
     setFormData({
@@ -604,13 +641,22 @@ const AdminUsers = () => {
               >
                 <KeyRound size={16} />
               </button>
-              {user.isActive && (
+              {user.isActive ? (
                 <button
                   className="btn-icon danger"
                   title="Deactivate"
                   onClick={() => handleDeactivateUser(user._id)}
                 >
                   <Ban size={16} />
+                </button>
+              ) : (
+                <button
+                  className="btn-icon success"
+                  title="Reactivate"
+                  onClick={() => handleReactivateUser(user._id)}
+                  style={{ color: "var(--success-color)" }}
+                >
+                  <CheckCircle size={16} />
                 </button>
               )}
             </div>

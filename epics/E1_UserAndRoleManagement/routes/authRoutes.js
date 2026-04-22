@@ -18,6 +18,7 @@ const {
   forgotPassword,
   resetPassword,
   deactivateUser,
+  reactivateUser,
   updateUser,
   getSessions,
   logout,
@@ -63,6 +64,12 @@ router.put(
   authorize("admin"),
   deactivateUser,
 ); // E1.10 - Deactivate user
+router.put(
+  "/users/:id/reactivate",
+  protect,
+  authorize("admin"),
+  reactivateUser,
+); // Reactivate user
 router.post(
   "/users/:id/force-reset",
   protect,
