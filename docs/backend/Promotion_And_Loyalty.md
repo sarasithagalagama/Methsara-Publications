@@ -451,3 +451,27 @@ Customer can use it again on next order
 | Campaign | Automatic (date range) | No | `campaigns` | No (overlay only) |
 | Coupon | Customer enters code | Yes | `coupons` | No (discount tracked in `Order.couponDiscount`) |
 | Gift Voucher | Customer enters code | Yes (GV-XXXX) | `giftvouchers` | No (balance deducted from `GiftVoucher.balance`) |
+
+
+---
+
+## 📌 Viva Preparation: Where are the Validations?
+
+For your final viva, the examiners will likely ask: **"Where is your validation code? Show us in the codebase."**
+
+Here is exactly where to look for the **Backend** validations:
+
+### 1. Controller-Level Validations (Custom Logic)
+The majority of backend validations are implemented directly inside the controller files before processing the requests. We do not use third-party libraries like Zod or Joi; we use native JavaScript logic and Regular Expressions to ensure maximum control and performance.
+*   **Where to find it:** Open `epics/E[Number]_[EpicName]/controllers/[name]Controller.js`
+*   **What to show:** Look for `if (!field)` checks, regex validations like `emailRegex.test(email)` or `phoneRegex.test(phone)`, and numeric bounds checking (e.g., checking if stock > 0, calculating age from dateOfBirth).
+
+### 2. Mongoose Schema Validations (Model-Level)
+We also enforce data integrity at the database level using Mongoose built-in validators.
+*   **Where to find it:** Open `epics/E[Number]_[EpicName]/models/[name].js`
+*   **What to show:** Show the schema definitions where fields have `required: true`, `minlength`, `maxlength`, `enum` arrays, and `unique: true`. Also mention that controllers use `{ runValidators: true }` when performing updates (e.g., `findByIdAndUpdate`).
+
+### 3. Business Logic Validations (Cross-Epic)
+Certain actions require validations across different modules (e.g., you cannot delete a product if it still has inventory stock).
+*   **Where to find it:** Open the respective controller (e.g., `productController.js`).
+*   **What to show:** Point to the code where the controller queries another model (e.g., querying the `Inventory` model before allowing a product deletion) to ensure business rules are respected.

@@ -156,3 +156,27 @@ Gift voucher management page at `/marketing/gift-vouchers`. Two sections:
 - **Campaign vs Coupon distinction:** Campaigns apply automatically to entire product grades/categories — no action needed from the customer. Coupons require a code to be typed at checkout. If both apply to the same product, the backend combines discounts.
 - **Gift vouchers are pre-purchased products:** A customer first buys a voucher (E3 checkout), then receives a code, then redeems that code as partial or full payment on a future order.
 - **Coupon validation is always backend-enforced:** The frontend calls `/validate` before showing the discount to the user, but E3's `createOrder` re-validates on the backend so the discount cannot be tampered with client-side.
+
+
+---
+
+## 📌 Viva Preparation: Where are the Validations?
+
+For your final viva, the examiners will likely ask: **"Where is your validation code? Show us in the codebase."**
+
+Here is exactly where to look for the **Frontend** validations:
+
+### 1. Component State Validations (React State)
+Before any form is submitted to the backend, we validate the user input directly in the React components to provide immediate feedback and reduce server load.
+*   **Where to find it:** Open `client/src/epics/E[Number]_[EpicName]/components/[ComponentName].jsx` or `pages/[PageName].jsx`
+*   **What to show:** Show the `handleSubmit` or `onSubmit` functions. Point out the `if (formData.password !== formData.confirmPassword)` or `if (formData.phone.length < 10)` statements. Explain how we use `setError('...')` to update the UI with validation messages.
+
+### 2. HTML5 Native Validations
+We utilize standard HTML5 form validations to ensure basic rules are met before the JavaScript logic even runs.
+*   **Where to find it:** Look at the JSX inside the `return ( ... )` block of the form components.
+*   **What to show:** Point to the input fields and show the `required`, `type="email"`, `type="tel"`, `min`, and `max` attributes.
+
+### 3. API Error Handling (Catching Backend Validations)
+If a validation fails on the backend (e.g., duplicate ISBN or Email), the frontend catches it and displays it gracefully to the user.
+*   **Where to find it:** Look at the `try...catch` block inside the form submission handler.
+*   **What to show:** Point to the `catch (err)` block where we do `setError(err.response?.data?.message || 'Failed')`. This proves the frontend handles edge cases safely.

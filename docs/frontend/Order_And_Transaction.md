@@ -91,7 +91,7 @@ FinanceManagerDashboard.jsx
 
 ### `components/Order/Invoice.jsx`
 
-Printable invoice layout. Receives an order object as prop and renders a formatted A4-style invoice with company header, order items table, totals, and payment info. Triggered from `OrderDetail.jsx` via a "Print Invoice" button.
+Printable invoice layout. Receives an order object as prop and renders a formatted A4-style invoice with company header, order items table, totals, and payment info. Triggered from `OrderDetail.jsx` via a "Print Invoice" button. Generates invoices using a dedicated popup window approach to print only the transaction data without the surrounding page UI.
 
 ---
 
@@ -147,8 +147,9 @@ Finance manager home at `/finance/dashboard`. Displays:
 - Revenue KPI cards (today, this week, this month)
 - Net income (revenue minus expenses)
 - Daily revenue trend (line chart – last 30 days)
-- Transactions management table with archive and edit actions
+- Transactions management table with search, pagination, and archive/edit actions
 - Order table with payment status update controls
+- Consolidated action sections for streamlined workflow
 
 ---
 
@@ -174,3 +175,27 @@ Finance manager home at `/finance/dashboard`. Displays:
 | `createTransaction(data)` | `POST /api/financial/transactions` | Manual expense/income entry. |
 | `updateTransaction(id, data)` | `PUT /api/financial/transactions/:id` | Edit a transaction. |
 | `archiveTransaction(id)` | `PUT /api/financial/transactions/:id/archive` | Soft-archive a transaction. |
+
+
+---
+
+## 📌 Viva Preparation: Where are the Validations?
+
+For your final viva, the examiners will likely ask: **"Where is your validation code? Show us in the codebase."**
+
+Here is exactly where to look for the **Frontend** validations:
+
+### 1. Component State Validations (React State)
+Before any form is submitted to the backend, we validate the user input directly in the React components to provide immediate feedback and reduce server load.
+*   **Where to find it:** Open `client/src/epics/E[Number]_[EpicName]/components/[ComponentName].jsx` or `pages/[PageName].jsx`
+*   **What to show:** Show the `handleSubmit` or `onSubmit` functions. Point out the `if (formData.password !== formData.confirmPassword)` or `if (formData.phone.length < 10)` statements. Explain how we use `setError('...')` to update the UI with validation messages.
+
+### 2. HTML5 Native Validations
+We utilize standard HTML5 form validations to ensure basic rules are met before the JavaScript logic even runs.
+*   **Where to find it:** Look at the JSX inside the `return ( ... )` block of the form components.
+*   **What to show:** Point to the input fields and show the `required`, `type="email"`, `type="tel"`, `min`, and `max` attributes.
+
+### 3. API Error Handling (Catching Backend Validations)
+If a validation fails on the backend (e.g., duplicate ISBN or Email), the frontend catches it and displays it gracefully to the user.
+*   **Where to find it:** Look at the `try...catch` block inside the form submission handler.
+*   **What to show:** Point to the `catch (err)` block where we do `setError(err.response?.data?.message || 'Failed')`. This proves the frontend handles edge cases safely.

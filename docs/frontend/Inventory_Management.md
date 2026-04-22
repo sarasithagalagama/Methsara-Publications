@@ -92,11 +92,13 @@ Reusable inventory UI components:
 
 Landing page for all inventory manager roles at `/inventory/dashboard`. Displays:
 
-- **KPI cards:** Total products tracked, total stock units, locations count, pending transfers
+- **KPI cards:** Total products tracked, dynamically calculated Total Items, total stock units, locations count, pending transfers
 - **Inventory table:** Role-scoped (all locations vs. own location)
+- **Tab-based Navigation:** Seamless switching between Inventory, Transfers, Receive, and Alerts views
+- **Quick Actions:** Shortcuts for common tasks like receiving stock or initiating transfers
 - **Stock adjustment button:** Opens `StockAdjustmentForm` (master only)
 - **Pending transfers section:** Approve / reject buttons (master only) or "My pending requests" (location only)
-- **Low stock banner:** Quick link to `LowStockAlerts.jsx` if any items are below reorder level
+- **Low stock banner / Priority Alerts:** Quick link to `LowStockAlerts.jsx` if any items are below reorder level. Includes dynamic smooth-scrolling to direct users instantly to active alerts.
 
 ---
 
@@ -146,3 +148,27 @@ Dedicated page at `/inventory/low-stock`. Lists all products where `availableSto
 - **Inventory = Product × Location:** One `Inventory` document per product-location pair. The dashboard groups these into a tree view by location.
 - **availableStock = quantity − reservedStock:** The `reserved` field is incremented by E3 when an order is placed and decremented on dispatch. The frontend always shows `available` to the manager.
 - **Role gating is double-enforced:** The frontend conditionally renders controls (e.g., hides "Adjust Stock" for location managers), but the backend also rejects unauthorized requests independently.
+
+
+---
+
+## 📌 Viva Preparation: Where are the Validations?
+
+For your final viva, the examiners will likely ask: **"Where is your validation code? Show us in the codebase."**
+
+Here is exactly where to look for the **Frontend** validations:
+
+### 1. Component State Validations (React State)
+Before any form is submitted to the backend, we validate the user input directly in the React components to provide immediate feedback and reduce server load.
+*   **Where to find it:** Open `client/src/epics/E[Number]_[EpicName]/components/[ComponentName].jsx` or `pages/[PageName].jsx`
+*   **What to show:** Show the `handleSubmit` or `onSubmit` functions. Point out the `if (formData.password !== formData.confirmPassword)` or `if (formData.phone.length < 10)` statements. Explain how we use `setError('...')` to update the UI with validation messages.
+
+### 2. HTML5 Native Validations
+We utilize standard HTML5 form validations to ensure basic rules are met before the JavaScript logic even runs.
+*   **Where to find it:** Look at the JSX inside the `return ( ... )` block of the form components.
+*   **What to show:** Point to the input fields and show the `required`, `type="email"`, `type="tel"`, `min`, and `max` attributes.
+
+### 3. API Error Handling (Catching Backend Validations)
+If a validation fails on the backend (e.g., duplicate ISBN or Email), the frontend catches it and displays it gracefully to the user.
+*   **Where to find it:** Look at the `try...catch` block inside the form submission handler.
+*   **What to show:** Point to the `catch (err)` block where we do `setError(err.response?.data?.message || 'Failed')`. This proves the frontend handles edge cases safely.

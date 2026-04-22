@@ -140,7 +140,7 @@ Rendered automatically after login if `user.forcePasswordReset === true`. Preven
 
 ### `pages/AdminDashboard.jsx`
 
-Staff-only landing page. Displays summary cards (total users, recent orders, revenue snapshot). Links to all admin sub-pages.
+Staff-only landing page. Displays summary cards (total users, recent orders, revenue snapshot). Links to all admin sub-pages. Features a "Critical Actions" section equipped with essential utilities including Staff Invite, One-Click Backup, and System Health Monitor.
 
 ---
 
@@ -217,3 +217,27 @@ Reads `:token` from URL params. New password + confirm form. Calls `POST /api/au
 | `supplier_manager` | `/supplier/dashboard` → E4 `SupplierManagerDashboard.jsx` |
 | `master_inventory_manager` / `location_inventory_manager` | `/inventory/dashboard` → E5 `InventoryManagerDashboard.jsx` |
 | `marketing_manager` | `/marketing/dashboard` → E6 `MarketingManagerDashboard.jsx` |
+
+
+---
+
+## 📌 Viva Preparation: Where are the Validations?
+
+For your final viva, the examiners will likely ask: **"Where is your validation code? Show us in the codebase."**
+
+Here is exactly where to look for the **Frontend** validations:
+
+### 1. Component State Validations (React State)
+Before any form is submitted to the backend, we validate the user input directly in the React components to provide immediate feedback and reduce server load.
+*   **Where to find it:** Open `client/src/epics/E[Number]_[EpicName]/components/[ComponentName].jsx` or `pages/[PageName].jsx`
+*   **What to show:** Show the `handleSubmit` or `onSubmit` functions. Point out the `if (formData.password !== formData.confirmPassword)` or `if (formData.phone.length < 10)` statements. Explain how we use `setError('...')` to update the UI with validation messages.
+
+### 2. HTML5 Native Validations
+We utilize standard HTML5 form validations to ensure basic rules are met before the JavaScript logic even runs.
+*   **Where to find it:** Look at the JSX inside the `return ( ... )` block of the form components.
+*   **What to show:** Point to the input fields and show the `required`, `type="email"`, `type="tel"`, `min`, and `max` attributes.
+
+### 3. API Error Handling (Catching Backend Validations)
+If a validation fails on the backend (e.g., duplicate ISBN or Email), the frontend catches it and displays it gracefully to the user.
+*   **Where to find it:** Look at the `try...catch` block inside the form submission handler.
+*   **What to show:** Point to the `catch (err)` block where we do `setError(err.response?.data?.message || 'Failed')`. This proves the frontend handles edge cases safely.
