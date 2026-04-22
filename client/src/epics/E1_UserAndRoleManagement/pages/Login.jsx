@@ -61,6 +61,7 @@ const Login = () => {
         case "supplier_manager":
           navigate("/supplier-manager/dashboard");
           break;
+        case "inventory_manager":
         case "master_inventory_manager":
         case "location_inventory_manager":
           navigate("/inventory-manager/dashboard");
