@@ -77,6 +77,7 @@ Every API call follows this exact pipeline. Middleware runs **before** the contr
 | `forgotPassword(req, res)` | Generates a password-reset token, stores hashed version in User doc, sends email link. | No |
 | `resetPassword(req, res)` | Validates reset token (expiry + hash match), sets new password, clears token. | No |
 | `deactivateUser(req, res)` | Admin sets `isActive: false` on a user. All their sessions are revoked. | Admin |
+| `reactivateUser(req, res)` | Admin sets `isActive: true` on a user. | Admin |
 | `updateUser(req, res)` | Admin edits any user field (role, status, etc.). | Admin / Finance Mgr |
 | `getSessions(req, res)` | Returns all active sessions for the logged-in user. | Yes |
 | `logout(req, res)` | Deletes current session (from `Session` collection). Clears cookie. | Yes |
@@ -132,6 +133,7 @@ Every API call follows this exact pipeline. Middleware runs **before** the contr
 | GET | `/users` | Yes | Admin / Finance Mgr | List all users |
 | PUT | `/users/:id` | Yes | Admin / Finance Mgr | Update any user |
 | PUT | `/users/:id/deactivate` | Yes | Admin | Deactivate user |
+| PUT | `/users/:id/reactivate` | Yes | Admin | Reactivate user |
 | POST | `/users/:id/force-reset` | Yes | Admin | Force password reset |
 | GET | `/logs` | Yes | Admin | View security logs |
 

@@ -203,6 +203,7 @@ Reads `:token` from URL params. New password + confirm form. Calls `POST /api/au
 | `createStaff(data)` | `POST /api/auth/create-staff` | Admin: create staff account. |
 | `updateUser(id, data)` | `PUT /api/auth/users/:id` | Admin: update any user. |
 | `deactivateUser(id)` | `PUT /api/auth/users/:id/deactivate` | Admin: deactivate user account. |
+| `reactivateUser(id)` | `PUT /api/auth/users/:id/reactivate` | Admin: reactivate user account. |
 
 ---
 

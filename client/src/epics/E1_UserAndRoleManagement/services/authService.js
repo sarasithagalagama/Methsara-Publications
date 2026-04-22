@@ -1,4 +1,4 @@
-﻿// ============================================
+// ============================================
 // Authentication Service
 // Epic: E1 - User & Role Management
 // Owner: IT24100548 (Galagama S.T)
@@ -54,6 +54,36 @@ const authService = {
   updateProfile: async (userData) => {
     const response = await api.put("/auth/profile", userData);
     localStorage.setItem("user", JSON.stringify(response.data.user));
+    return response.data;
+  },
+
+  // [Admin] Get all users
+  getAllUsers: async () => {
+    const response = await api.get("/auth/users");
+    return response.data;
+  },
+
+  // [Admin] Create staff account
+  createStaff: async (staffData) => {
+    const response = await api.post("/auth/create-staff", staffData);
+    return response.data;
+  },
+
+  // [Admin] Update any user
+  updateUser: async (id, userData) => {
+    const response = await api.put(`/auth/users/${id}`, userData);
+    return response.data;
+  },
+
+  // [Admin] Deactivate user
+  deactivateUser: async (id) => {
+    const response = await api.put(`/auth/users/${id}/deactivate`);
+    return response.data;
+  },
+
+  // [Admin] Reactivate user
+  reactivateUser: async (id) => {
+    const response = await api.put(`/auth/users/${id}/reactivate`);
     return response.data;
   },
 };
