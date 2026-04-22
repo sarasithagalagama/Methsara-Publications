@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, Link, useSearchParams } from "react-router-dom";
+import { Outlet, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../epics/E1_UserAndRoleManagement/context/AuthContext";
 import {
   Search,
@@ -27,11 +27,14 @@ import {
 
 const CustomerLayout = () => {
   const { user, logout: handleLogout, cartCount, wishlistCount } = useAuth();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [headerSearchInput, setHeaderSearchInput] = useState("");
+  const [isHeaderSearchOpen, setIsHeaderSearchOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -71,6 +74,16 @@ const CustomerLayout = () => {
     setIsRegisterModalOpen(true);
     setIsLoginModalOpen(false);
     setIsMobileMenuOpen(false);
+  };
+
+  const handleHeaderSearch = (e) => {
+    if (e.key === "Enter" || e.type === "click") {
+      if (headerSearchInput.trim()) {
+        navigate(`/books?search=${encodeURIComponent(headerSearchInput)}`);
+        setHeaderSearchInput("");
+        setIsHeaderSearchOpen(false);
+      }
+    }
   };
 
   return (
@@ -143,9 +156,31 @@ const CustomerLayout = () => {
             </nav>
 
             <div className="header-icons">
-              <button className="icon-btn nav-search-btn">
-                <Search size={22} strokeWidth={1.8} />
-              </button>
+              <div className="header-search-wrapper">
+                {isHeaderSearchOpen && (
+                  <input
+                    type="text"
+                    className="header-search-input"
+                    placeholder="Search books..."
+                    value={headerSearchInput}
+                    onChange={(e) => setHeaderSearchInput(e.target.value)}
+                    onKeyDown={handleHeaderSearch}
+                    autoFocus
+                  />
+                )}
+                <button
+                  className="icon-btn nav-search-btn"
+                  onClick={() => {
+                    if (isHeaderSearchOpen && headerSearchInput.trim()) {
+                      handleHeaderSearch({ type: "click" });
+                    } else {
+                      setIsHeaderSearchOpen(!isHeaderSearchOpen);
+                    }
+                  }}
+                >
+                  <Search size={22} strokeWidth={1.8} />
+                </button>
+              </div>
               <Link
                 to="/wishlist"
                 className="icon-btn heart-icon"
